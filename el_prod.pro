@@ -11,13 +11,15 @@ SOURCES += \
     mainwindow.cpp \
     rest/httpsyncmanager.cpp \
     rest/restconnection.cpp \
-    rest/restlogin.cpp
+    rest/restlogin.cpp \
+    rest/resttablemodel.cpp
 
 HEADERS += \
     mainwindow.h \
     rest/httpsyncmanager.h \
     rest/restconnection.h \
-    rest/restlogin.h
+    rest/restlogin.h \
+    rest/resttablemodel.h
 
 FORMS += \
     mainwindow.ui \

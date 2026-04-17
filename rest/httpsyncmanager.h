@@ -15,7 +15,7 @@ class HttpSyncManager : public QObject
     Q_OBJECT
 public:
     explicit HttpSyncManager(QObject *parent = nullptr);
-    static bool sendRequest(QString path, QString req, const QByteArray &data, QByteArray &respData);
+    static bool sendRequest(QString path, QString req, const QByteArray &body, QByteArray &respData, QString content_type = QString());
     static bool sendGet(QString path, QByteArray &data);
 
 };

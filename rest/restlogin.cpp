@@ -53,8 +53,11 @@ void RestLogin::onResult(QNetworkReply *reply)
     } else {
         QJsonDocument doc = QJsonDocument::fromJson(reply->readAll());
         QString token = doc.object().value("token").toString();
+        QString user = doc.object().value("username").toString();
+        qint64 iat = doc.object().value("iat").toInteger();
+        qint64 exp = doc.object().value("exp").toInteger();
         RestConnection::instance()->setUrl(currentUrl());
-        RestConnection::instance()->setToken(token);
+        RestConnection::instance()->setToken(token,user,iat,exp);
         if (!token.isEmpty()){
             this->accept();
         } else {

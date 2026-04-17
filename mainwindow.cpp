@@ -6,6 +6,11 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+
+    model = new RestTableModel("el_parti",this);
+
+    ui->tableView->setModel(model);
+
     connect(ui->pushButton,SIGNAL(clicked(bool)),this,SLOT(getData()));
 }
 
@@ -17,7 +22,8 @@ MainWindow::~MainWindow()
 
 void MainWindow::getData()
 {
-    QByteArray data;
+    /*QByteArray data;
     bool ok = HttpSyncManager::sendGet("api/elrtr/parti",data);
-    qDebug()<<ok;
+    qDebug()<<ok;*/
+    model->select();
 }

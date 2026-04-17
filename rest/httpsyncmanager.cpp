@@ -6,12 +6,15 @@ HttpSyncManager::HttpSyncManager(QObject *parent)
 
 }
 
-bool HttpSyncManager::sendRequest(QString path, QString req, const QByteArray &data, QByteArray &respData)
+bool HttpSyncManager::sendRequest(QString path, QString req, const QByteArray &body, QByteArray &respData, QString content_type)
 {
     QNetworkRequest request(QUrl(RestConnection::instance()->getUrl()+"/"+path));
     request.setRawHeader("Accept-Charset", "UTF-8");
     request.setRawHeader("User-Agent", "Appszsm");
     request.setRawHeader("Authorization", "Bearer "+RestConnection::instance()->getToken().toUtf8());
+    if (!content_type.isEmpty()){
+        request.setRawHeader("Content-Type", content_type.toUtf8());
+    }
     QEventLoop loop;
     QNetworkAccessManager man;
     connect(&man,SIGNAL(finished(QNetworkReply*)),&loop,SLOT(quit()));
@@ -19,7 +22,9 @@ bool HttpSyncManager::sendRequest(QString path, QString req, const QByteArray &d
     if (req=="GET"){
         reply=man.get(request);
     } else if (req=="POST"){
-        reply=man.post(request,data);
+        reply=man.post(request,body);
+    } else if (req=="PUT"){
+        reply=man.put(request,body);
     } else if (req=="DELETE"){
         reply=man.deleteResource(request);
     } else {
@@ -32,17 +37,7 @@ bool HttpSyncManager::sendRequest(QString path, QString req, const QByteArray &d
     respData=reply->readAll();
     bool ok=(reply->error()==QNetworkReply::NoError);
     if (!ok){
-        int status_code = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-        if (status_code==401 || status_code==403){
-            RestLogin l(tr("Пожалуйста, авторизуйтесь"));
-            if (l.exec()!=QDialog::Accepted) {
-                QApplication::exit();
-            } else {
-                ok=HttpSyncManager::sendRequest(path,req, data,respData);
-            }
-        } else {
-            QMessageBox::critical(nullptr,tr("Ошибка"),reply->errorString()+"\n"+respData,QMessageBox::Cancel);
-        }
+        QMessageBox::critical(nullptr,tr("Ошибка"),reply->errorString()+"\n"+respData,QMessageBox::Cancel);
     }
     reply->deleteLater();
     return ok;
