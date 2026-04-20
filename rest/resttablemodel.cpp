@@ -6,9 +6,9 @@ RestTableModel::RestTableModel(QString name, QObject *parent) : QAbstractTableMo
     loadInfo();
 }
 
-Qt::ItemFlags RestTableModel::flags(const QModelIndex &/*index*/) const
+Qt::ItemFlags RestTableModel::flags(const QModelIndex &index) const
 {
-    return Qt::ItemIsEditable | Qt::ItemIsSelectable |Qt::ItemIsUserCheckable | Qt::ItemIsEnabled;
+    return colData.at(index.column()).flags;
 }
 
 QVariant RestTableModel::data(const QModelIndex &index, int role) const
@@ -43,7 +43,16 @@ QVariant RestTableModel::data(const QModelIndex &index, int role) const
     case Qt::TextAlignmentRole:
     {
         QMetaType::Type colType = columnType(index.column());
-        value=(colType==QMetaType::Int || colType==QMetaType::Double)? int(Qt::AlignRight | Qt::AlignVCenter) : int(Qt::AlignLeft | Qt::AlignVCenter);
+        value=(colType==QMetaType::Int || colType==QMetaType::Double || colType==QMetaType::LongLong)? int(Qt::AlignRight | Qt::AlignVCenter) : int(Qt::AlignLeft | Qt::AlignVCenter);
+        break;
+    }
+    case Qt::CheckStateRole:
+    {
+        if (colData.at(index.column()).checkable){
+            value = cell.edit.toBool() ? Qt::Checked : Qt::Unchecked;
+        } else {
+            value = QVariant();
+        }
         break;
     }
     default:
@@ -76,6 +85,10 @@ QMetaType::Type RestTableModel::columnType(int col) const
     return getMetaType(colData.at(col).udt_name);
 }
 
+colInfo RestTableModel::columnInfo(int col) const
+{
+    return colData.at(col);
+}
 
 void RestTableModel::select()
 {
@@ -91,7 +104,7 @@ void RestTableModel::select()
                 QJsonObject obj = value.toObject().value(col.nam).toObject();
                 cellData cell;
                 cell.display=obj.value("display_role").toString();
-                cell.edit=obj.value("edit_role").toVariant();
+                cell.edit=loadEdtVal(obj.value("edit_role"),col.udt_name);
                 cell.background=QColor(obj.value("background_role").toString());
                 cell.tooltip=obj.value("tooltip_role").toString();
                 row.push_back(cell);
@@ -120,7 +133,8 @@ void RestTableModel::loadInfo()
             inf.editale=value.toObject().value("editable").toBool();
             inf.checkable=value.toObject().value("checkable").toBool();
             inf.dec=value.toObject().value("dec").toInt();
-            inf.relnam=value.toObject().value("relnam").toString();
+            inf.relnam=value.toObject().value("relnam").toString();          
+            inf.flags= inf.editale ? (Qt::ItemIsEditable | Qt::ItemIsSelectable | Qt::ItemIsUserCheckable | Qt::ItemIsEnabled) : (Qt::ItemIsSelectable | Qt::ItemIsUserCheckable | Qt::ItemIsEnabled);
             colData.push_back(inf);
         }
     }
@@ -128,15 +142,32 @@ void RestTableModel::loadInfo()
 
 QMetaType::Type RestTableModel::getMetaType(const QString &udt_name) const
 {
-    QMetaType::Type type;
-    if (udt_name=="int2" || udt_name=="int4" || udt_name=="int8"){
-        type=QMetaType::Int;
-    } else if (udt_name=="float4" || udt_name=="float8" || udt_name=="numeric"){
-        type=QMetaType::Double;
-    } else if (udt_name=="date"){
-        type=QMetaType::QDate;
-    } else if (udt_name=="bool"){
+    QStringList boolList = {"bool"};
+    QStringList longList = {"int8"};
+    QStringList intList = {"int2", "int4", "oid", "regproc", "xid"};
+    QStringList doubleList = {"float4", "float8", "numeric"};
+    QStringList dateList = {"date"};
+    QStringList timeList = {"time", "timetz"};
+    QStringList dateTimeList = {"timestamp", "timestamptz"};
+    QStringList byteaList = {"bytea"};
+
+    QMetaType::Type type = QMetaType::UnknownType;
+    if (boolList.contains(udt_name)){
         type=QMetaType::Bool;
+    } else if (longList.contains(udt_name)){
+        type=QMetaType::LongLong;
+    } else if (intList.contains(udt_name)){
+        type=QMetaType::Int;
+    } else if (doubleList.contains(udt_name)){
+        type=QMetaType::Double;
+    } else if (dateList.contains(udt_name)){
+        type=QMetaType::QDate;
+    } else if (timeList.contains(udt_name)){
+        type=QMetaType::QTime;
+    } else if (dateTimeList.contains(udt_name)){
+        type=QMetaType::QDateTime;
+    } else if (byteaList.contains(udt_name)){
+        type=QMetaType::QByteArray;
     } else {
         type=QMetaType::QString;
     }
@@ -146,5 +177,44 @@ QMetaType::Type RestTableModel::getMetaType(const QString &udt_name) const
 QVariant RestTableModel::loadEdtVal(const QJsonValue &val, const QString &udt_name) const
 {
     QMetaType::Type type=getMetaType(udt_name);
+    if (val.isNull()){
+        return QVariant(QMetaType(type),nullptr);
+    }
+    switch (type) {
+    case QMetaType::Bool: {
+        return val.toBool();
+    }
+    case QMetaType::LongLong: {
+        return val.toInteger();
+    }
+    case QMetaType::Int: {
+        return val.toInt();
+    }
+    case QMetaType::Double: {
+        if (udt_name=="numeric"){
+            return val.toString().toDouble();
+        } else {
+            return val.toDouble();
+        }
+    }
+    case QMetaType::QDate: {
+        return QDateTime::fromString(val.toString(),Qt::ISODate).toLocalTime().date();
+    }
+    case QMetaType::QTime: {
+        return QTime::fromString(val.toString(),Qt::ISODate);
+    }
+    case QMetaType::QDateTime: {
+        return QDateTime::fromString(val.toString(),Qt::ISODate).toLocalTime();
+    }
+    case QMetaType::QByteArray: {
+        return val.toVariant();
+    }
+    case QMetaType::QString: {
+        return val.toString();
+    }
+    default: {
+        return val.toVariant();
+    }
+    }
     return QVariant();
 }

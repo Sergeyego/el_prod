@@ -24,6 +24,7 @@ struct colInfo {
     bool checkable;
     int dec;
     QString relnam;
+    Qt::ItemFlags flags;
 };
 
 class RestTableModel : public QAbstractTableModel
@@ -37,6 +38,7 @@ public:
     int columnCount(const QModelIndex &parent) const;
     QVariant headerData(int section, Qt::Orientation orientation, int role) const;
     QMetaType::Type columnType(int col) const;
+    colInfo columnInfo(int col) const;
 public slots:
     void select();
 private:

@@ -26,4 +26,5 @@ void MainWindow::getData()
     bool ok = HttpSyncManager::sendGet("api/elrtr/parti",data);
     qDebug()<<ok;*/
     model->select();
+    ui->tableView->resizeToContents();
 }
