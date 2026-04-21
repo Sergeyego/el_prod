@@ -9,9 +9,15 @@ MainWindow::MainWindow(QWidget *parent)
 
     model = new RestTableModel("el_parti",this);
 
+    relModel = RelModels::instance()->getModel("mark");
+    ui->comboBox->setModel(relModel);
+    ui->comboBox->setModelColumn(1);
+
     ui->tableView->setModel(model);
 
     connect(ui->pushButton,SIGNAL(clicked(bool)),this,SLOT(getData()));
+
+    connect(ui->pushButtonRel,SIGNAL(clicked(bool)),relModel,SLOT(refresh()));
 }
 
 MainWindow::~MainWindow()

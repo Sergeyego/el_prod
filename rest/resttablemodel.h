@@ -6,6 +6,15 @@
 #include <QColor>
 #include <QJsonArray>
 #include "rest/httpsyncmanager.h"
+#include "rest/restrelmodel.h"
+
+struct colVal {
+    QString disp;
+    QVariant val;
+    bool operator==(const colVal& rh) const {
+        return (this->disp==rh.disp) && (this->val==rh.val);
+    }
+};
 
 struct cellData {
     QString display;
@@ -27,6 +36,28 @@ struct colInfo {
     Qt::ItemFlags flags;
 };
 
+class DataEditor : public QObject
+{
+    Q_OBJECT
+public:
+    DataEditor(QVector<QVector<cellData>> *data, QObject *parent=nullptr);
+    bool add(int p, QVector<cellData> &row);
+    bool edt(int row, int col, cellData val);
+    void submit();
+    void revert();
+    bool isAdd();
+    bool isEdt();
+    int currentPos();
+    QVector<cellData> oldRow();
+    QVector<cellData> newRow();
+private:
+    QVector<QVector<cellData>> *mData;
+    QVector<cellData> saveRow;
+    bool addFlag;
+    bool edtFlag;
+    int pos;
+};
+
 class RestTableModel : public QAbstractTableModel
 {
     Q_OBJECT
@@ -34,6 +65,7 @@ public:
     RestTableModel(QString name, QObject *parent);
     Qt::ItemFlags flags(const QModelIndex &index) const;
     QVariant data(const QModelIndex &index, int role) const;
+    bool setData(const QModelIndex &index, const QVariant &value, int role);
     int rowCount(const QModelIndex &parent) const;
     int columnCount(const QModelIndex &parent) const;
     QVariant headerData(int section, Qt::Orientation orientation, int role) const;
@@ -42,6 +74,7 @@ public:
 public slots:
     void select();
 private:
+    DataEditor *editor;
     QVector<QVector<cellData>> modelData;
     QVector<colInfo> colData;
     QString _path;

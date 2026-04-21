@@ -1,8 +1,9 @@
-#include "resttablemodel.h"
+ #include "resttablemodel.h"
 
 RestTableModel::RestTableModel(QString name, QObject *parent) : QAbstractTableModel(parent), _rname(name)
 {
-    _path="api/elrtr/parti";
+    _path = "api/elrtr/parti";
+    editor = new DataEditor(&modelData,this);
     loadInfo();
 }
 
@@ -43,7 +44,7 @@ QVariant RestTableModel::data(const QModelIndex &index, int role) const
     case Qt::TextAlignmentRole:
     {
         QMetaType::Type colType = columnType(index.column());
-        value=(colType==QMetaType::Int || colType==QMetaType::Double || colType==QMetaType::LongLong)? int(Qt::AlignRight | Qt::AlignVCenter) : int(Qt::AlignLeft | Qt::AlignVCenter);
+        value=((colType==QMetaType::Int || colType==QMetaType::Double || colType==QMetaType::LongLong) && colData.at(index.column()).relnam.isEmpty())? int(Qt::AlignRight | Qt::AlignVCenter) : int(Qt::AlignLeft | Qt::AlignVCenter);
         break;
     }
     case Qt::CheckStateRole:
@@ -60,6 +61,30 @@ QVariant RestTableModel::data(const QModelIndex &index, int role) const
         break;
     }
     return value;
+}
+
+bool RestTableModel::setData(const QModelIndex &index, const QVariant &value, int role)
+{
+    if (!(this->flags(index) & Qt::ItemIsEditable)) return false;
+    cellData setVal=modelData[index.row()][index.column()];
+
+    if (columnType(index.column())==QMetaType::Bool){
+        setVal.edit=value.toBool();
+    } else if(!data(index,Qt::CheckStateRole).isNull() && columnType(index.column())==QMetaType::Int){
+        setVal.edit=value.toBool()? 1 : 0;
+    } else {
+        if (role==Qt::DisplayRole){
+            setVal.display=value.toString();
+        } else if (role==Qt::EditRole){
+            setVal.edit=value;
+        }
+    }
+
+    bool ok=false;
+    ok=editor->edt(index.row(),index.column(),setVal);
+    emit dataChanged(index,index);
+    emit headerDataChanged(Qt::Vertical,index.row(),index.row());
+    return ok;
 }
 
 int RestTableModel::rowCount(const QModelIndex &/*parent*/) const
@@ -134,7 +159,7 @@ void RestTableModel::loadInfo()
             inf.checkable=value.toObject().value("checkable").toBool();
             inf.dec=value.toObject().value("dec").toInt();
             inf.relnam=value.toObject().value("relnam").toString();          
-            inf.flags= inf.editale ? (Qt::ItemIsEditable | Qt::ItemIsSelectable | Qt::ItemIsUserCheckable | Qt::ItemIsEnabled) : (Qt::ItemIsSelectable | Qt::ItemIsUserCheckable | Qt::ItemIsEnabled);
+            inf.flags = inf.editale ? (Qt::ItemIsEditable | Qt::ItemIsSelectable | Qt::ItemIsUserCheckable | Qt::ItemIsEnabled) : (Qt::ItemIsSelectable | Qt::ItemIsUserCheckable | Qt::ItemIsEnabled);
             colData.push_back(inf);
         }
     }
@@ -217,4 +242,90 @@ QVariant RestTableModel::loadEdtVal(const QJsonValue &val, const QString &udt_na
     }
     }
     return QVariant();
+}
+
+DataEditor::DataEditor(QVector<QVector<cellData> > *data, QObject *parent) : QObject(parent), mData(data)
+{
+    pos=-1;
+    addFlag=false;
+    edtFlag=false;
+}
+
+bool DataEditor::add(int p, QVector<cellData> &row)
+{
+    bool ok=false;
+    if (!addFlag && !edtFlag){
+        //mData->insertRow(p,row);
+        pos=p;
+        addFlag=true;
+        ok=true;
+    }
+    return ok;
+}
+
+bool DataEditor::edt(int row, int col, cellData val)
+{
+    if((edtFlag && row!=pos) || (addFlag && row!=pos)) return false;
+    if (!edtFlag){
+        pos=row;
+        saveRow=mData->at(row);
+    }
+
+    //mData[row][col]=val;
+    edtFlag=true;
+    return true;
+}
+
+void DataEditor::submit()
+{
+    addFlag=false;
+    edtFlag=false;
+    pos=-1;
+}
+
+void DataEditor::revert()
+{
+    if ((edtFlag && !addFlag) || (addFlag && /*mData->rowCount()==1 && */edtFlag)){
+        //mData->setRow(saveRow,pos);
+        edtFlag=false;
+    } else if (addFlag /*&& mData->rowCount()>1*/){
+        //mData->delRow(pos);
+        addFlag=false;
+        edtFlag=false;
+    } else {
+        edtFlag=false;
+        addFlag=false;
+        pos=-1;
+    }
+}
+
+bool DataEditor::isAdd()
+{
+    return addFlag;
+}
+
+bool DataEditor::isEdt()
+{
+    return edtFlag;
+}
+
+int DataEditor::currentPos()
+{
+    return pos;
+}
+
+QVector<cellData> DataEditor::oldRow()
+{
+    return saveRow;
+}
+
+QVector<cellData> DataEditor::newRow()
+{
+    QVector<cellData> r;
+    if (addFlag || edtFlag){
+        /*for (int i=0; i<mData->columnCount(); i++){
+            r.push_back(mData->column(i)->data.at(pos));
+        }*/
+    }
+    return r;
 }

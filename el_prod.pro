@@ -10,18 +10,26 @@ SOURCES += \
     main.cpp \
     mainwindow.cpp \
     rest/httpsyncmanager.cpp \
+    rest/relmodels.cpp \
+    rest/restcombobox.cpp \
     rest/restconnection.cpp \
+    rest/restdateedit.cpp \
     rest/restitemdelegate.cpp \
     rest/restlogin.cpp \
+    rest/restrelmodel.cpp \
     rest/resttablemodel.cpp \
     rest/resttableview.cpp
 
 HEADERS += \
     mainwindow.h \
     rest/httpsyncmanager.h \
+    rest/relmodels.h \
+    rest/restcombobox.h \
     rest/restconnection.h \
+    rest/restdateedit.h \
     rest/restitemdelegate.h \
     rest/restlogin.h \
+    rest/restrelmodel.h \
     rest/resttablemodel.h \
     rest/resttableview.h
 

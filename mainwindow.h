@@ -4,6 +4,8 @@
 #include <QMainWindow>
 #include "rest/httpsyncmanager.h"
 #include "rest/resttablemodel.h"
+#include "rest/restrelmodel.h"
+#include "rest/relmodels.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -22,6 +24,7 @@ public:
 private:
     Ui::MainWindow *ui;
     RestTableModel *model;
+    RestRelModel *relModel;
 
 private slots:
     void getData();

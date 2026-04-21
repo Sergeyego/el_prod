@@ -8,6 +8,8 @@
 #include <QDateEdit>
 #include <QKeyEvent>
 #include "rest/resttablemodel.h"
+#include "rest/restdateedit.h"
+#include "rest/restcombobox.h"
 
 class RestItemDelegate : public QItemDelegate
 {
