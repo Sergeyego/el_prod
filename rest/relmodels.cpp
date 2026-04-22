@@ -4,7 +4,7 @@ RelModels* RelModels::relModels_instance=nullptr;
 
 RelModels::RelModels(QObject *parent) : QObject(parent)
 {
-
+    connect(qApp,SIGNAL(aboutToQuit()),this,SLOT(deleteLater()));
 }
 
 RelModels *RelModels::instance()
@@ -23,4 +23,9 @@ RestRelModel *RelModels::getModel(QString name)
         map.insert(name, model);
     }
     return map.value(name, nullptr);
+}
+
+RelModels::~RelModels()
+{
+    //qDebug()<<"delete rels";
 }

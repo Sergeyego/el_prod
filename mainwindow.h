@@ -28,5 +28,6 @@ private:
 
 private slots:
     void getData();
+    void setDefaultValue();
 };
 #endif // MAINWINDOW_H

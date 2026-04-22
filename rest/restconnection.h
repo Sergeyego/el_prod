@@ -11,6 +11,7 @@ class RestConnection : public QObject
     Q_OBJECT
 public:
     static RestConnection *instance();
+    ~RestConnection();
     void setUrl(const QString &u);
     void setToken(const QString &t, const QString &user, const qint64 &from, const qint64 &to);
     QString getUrl() const;

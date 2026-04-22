@@ -69,7 +69,7 @@ void RestItemDelegate::setEditorData(QWidget *editor, const QModelIndex &index) 
 {
     const RestTableModel *restTableModel = qobject_cast<const RestTableModel *>(index.model());
     if (restTableModel){
-        if (!restTableModel->columnInfo(index.column()).relnam.isEmpty()){
+        if (restTableModel->isColumnRel(index.column())){
             RestComboBox *combo = qobject_cast<RestComboBox *>(editor);
             if (combo) {
                 combo->setIndex(index);
@@ -156,6 +156,72 @@ void RestItemDelegate::setEditorData(QWidget *editor, const QModelIndex &index) 
         }
     }
     return QItemDelegate::setEditorData(editor, index);
+}
+
+void RestItemDelegate::setModelData(QWidget *editor, QAbstractItemModel *model, const QModelIndex &index) const
+{
+    if (!index.isValid()){
+        return;
+    }
+    RestTableModel *restTableModel = qobject_cast<RestTableModel *>(model);
+    if (restTableModel){
+        const QMetaType::Type type = restTableModel->columnType(index.column());
+        if (restTableModel->isColumnRel(index.column())){
+            RestComboBox *combo = qobject_cast<RestComboBox *>(editor);
+            if (combo) {
+                colVal data=combo->getCurrentData();
+                if (combo->currentText().isEmpty()){
+                    data.val=QVariant(QMetaType(type),nullptr);
+                    data.disp=QString();
+                }
+                restTableModel->setData(index,data.val,Qt::EditRole);
+                restTableModel->setData(index,data.disp,Qt::DisplayRole);
+                return;
+            }
+        } else {
+            QLineEdit *le = qobject_cast<QLineEdit *>(editor);
+            if (le){
+                if (le->text().isEmpty()) {
+                    restTableModel->setData(index,QVariant(QMetaType(type),nullptr),Qt::EditRole);
+                    return;
+                } else {
+                    if (type==QMetaType::Int){
+                        restTableModel->setData(index,le->text().toInt(),Qt::EditRole);
+                    } else if (type==QMetaType::LongLong){
+                        restTableModel->setData(index,le->text().toLongLong(),Qt::EditRole);
+                    } else if (type==QMetaType::Double){
+                        restTableModel->setData(index,le->text().toDouble(),Qt::EditRole);
+                    } else {
+                        restTableModel->setData(index,le->text(),Qt::EditRole);
+                    }
+                    return;
+                }
+            }
+            if (type==QMetaType::QDate){
+                RestDateEdit *dateEdit = qobject_cast<RestDateEdit *>(editor);
+                if (dateEdit){
+                    if (dateEdit->date()==dateEdit->minimumDate()){
+                        restTableModel->setData(index,QVariant(QMetaType(type),nullptr),Qt::EditRole);
+                    } else {
+                        restTableModel->setData(index,dateEdit->date(),Qt::EditRole);
+                    }
+                    return;
+                }
+            }
+            if (type==QMetaType::QDateTime){
+                RestDateTimeEdit *dateTimeEdit = qobject_cast<RestDateTimeEdit *>(editor);
+                if (dateTimeEdit){
+                    if (dateTimeEdit->dateTime()==dateTimeEdit->minimumDateTime()){
+                        restTableModel->setData(index,QVariant(QMetaType(type),nullptr),Qt::EditRole);
+                    } else {
+                        restTableModel->setData(index,dateTimeEdit->dateTime(),Qt::EditRole);
+                    }
+                    return;
+                }
+            }
+        }
+    }
+    return QItemDelegate::setModelData(editor,model,index);
 }
 
 bool RestItemDelegate::eventFilter(QObject *object, QEvent *event)

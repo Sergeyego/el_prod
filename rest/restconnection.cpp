@@ -9,6 +9,11 @@ RestConnection *RestConnection::instance()
     return connection_instance;
 }
 
+RestConnection::~RestConnection()
+{
+    //qDebug()<<"delete connection!";
+}
+
 void RestConnection::setUrl(const QString &u)
 {
     url=u;
@@ -54,5 +59,6 @@ RestConnection::RestConnection(QObject *parent) : QObject(parent)
     iat=0;
     exp=0;
     local_iat=0;
+    connect(qApp,SIGNAL(aboutToQuit()),this,SLOT(deleteLater()));
 }
 

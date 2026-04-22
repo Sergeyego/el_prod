@@ -2,6 +2,7 @@
 #define RELMODELS_H
 
 #include <QObject>
+#include <QApplication>
 #include "rest/restrelmodel.h"
 
 class RelModels : public QObject
@@ -13,6 +14,7 @@ protected:
 public:
     static RelModels *instance();
     RestRelModel* getModel(QString name);
+    ~RelModels();
 
 private:
     static RelModels *relModels_instance;

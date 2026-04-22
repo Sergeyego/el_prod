@@ -2,9 +2,12 @@
 
 RestTableModel::RestTableModel(QString name, QObject *parent) : QAbstractTableModel(parent), _rname(name)
 {
-    _path = "api/elrtr/parti";
+    _path = "api/autorest/tables/"+_rname;
+    block=false;
+    insertable=true;
     editor = new DataEditor(&modelData,this);
     loadInfo();
+
 }
 
 Qt::ItemFlags RestTableModel::flags(const QModelIndex &index) const
@@ -65,23 +68,27 @@ QVariant RestTableModel::data(const QModelIndex &index, int role) const
 
 bool RestTableModel::setData(const QModelIndex &index, const QVariant &value, int role)
 {
-    if (!(this->flags(index) & Qt::ItemIsEditable)) return false;
+    if (!(this->flags(index) & Qt::ItemIsEditable)) {
+        return false;
+    }
     cellData setVal=modelData[index.row()][index.column()];
-
-    if (columnType(index.column())==QMetaType::Bool){
-        setVal.edit=value.toBool();
-    } else if(!data(index,Qt::CheckStateRole).isNull() && columnType(index.column())==QMetaType::Int){
-        setVal.edit=value.toBool()? 1 : 0;
-    } else {
-        if (role==Qt::DisplayRole){
-            setVal.display=value.toString();
-        } else if (role==Qt::EditRole){
-            setVal.edit=value;
+    if (role==Qt::CheckStateRole){
+        if (columnType(index.column())==QMetaType::Bool){
+            setVal.edit=value.toBool();
+        } else if(columnType(index.column())==QMetaType::Int){
+            setVal.edit=value.toBool()? 1 : 0;
         }
+        setVal.display=formatVal(value.toBool(),index.column());
+    } else if (role==Qt::EditRole){
+        setVal.edit=value;
+        if (!isColumnRel(index.column())){
+            setVal.display=formatVal(value,index.column());
+        }
+    } else if (role==Qt::DisplayRole){
+        setVal.display=value.toString();
     }
 
-    bool ok=false;
-    ok=editor->edt(index.row(),index.column(),setVal);
+    bool ok=editor->edt(index.row(),index.column(),setVal);
     emit dataChanged(index,index);
     emit headerDataChanged(Qt::Vertical,index.row(),index.row());
     return ok;
@@ -97,12 +104,113 @@ int RestTableModel::columnCount(const QModelIndex &/*parent*/) const
     return colData.size();
 }
 
+bool RestTableModel::insertRow(int /*row*/, const QModelIndex &/*parent*/)
+{
+    if (block || !insertable) {
+        return false;
+    }
+    bool ok=false;
+    if (!editor->isAdd() && !editor->isEdt()){
+        emit sigAboutToBeInsert();
+        QVector<cellData> tmpRow;
+        for (int i=0; i<columnCount();i++){
+            cellData d;
+            d.edit=colData.at(i).defaultVal;
+            d.display=formatVal(colData.at(i).defaultVal,i);
+            d.background=QColor(255,255,255);
+            tmpRow.push_back(d);
+        }
+        beginInsertRows(QModelIndex(),rowCount(),rowCount());
+        ok=editor->add(rowCount(),tmpRow);
+        endInsertRows();
+    }
+    return ok;
+}
+
+bool RestTableModel::removeRow(int row, const QModelIndex &parent)
+{
+    revert();
+    if (!rowCount() || row<0 || row>=rowCount() || (editor->isAdd() && rowCount()==1)) {
+        return false;
+    }
+    QString dat;
+    for(int i=0; i<columnCount(); i++) {
+        if (!dat.isEmpty()){
+            dat+=", ";
+        }
+        dat+=data(this->index(row,i),Qt::DisplayRole).toString();
+    }
+    int n=QMessageBox::question(nullptr,QString::fromUtf8("Подтвердите удаление"),
+                                  QString::fromUtf8("Подтветждаете удаление ")+dat+QString::fromUtf8("?"),QMessageBox::Yes| QMessageBox::No);
+    bool ok=false;
+    if (n==QMessageBox::Yes) {
+        if (/*deleteDb(row)*/true) {
+            beginRemoveRows(parent,row,row);
+            modelData.remove(row);
+            endRemoveRows();
+            ok=true;
+        }
+    }
+    if (ok){
+        if (modelData.size()<1) {
+            this->insertRow(0);
+        }
+        emit sigUpd();
+    }
+    return ok;
+}
+
+void RestTableModel::setFilter(QString f)
+{
+    _filter=f;
+}
+
+void RestTableModel::setPath(QString p)
+{
+    _path=p;
+}
+
+void RestTableModel::setInsertable(bool b)
+{
+    insertable=b;
+}
+
+void RestTableModel::setDefaultValue(int column, QVariant value)
+{
+    colData[column].defaultVal=value;
+}
+
+void RestTableModel::setColumnFlags(int column, Qt::ItemFlags flags)
+{
+    colData[column].flags=flags;
+}
+
+QVariant RestTableModel::defaultValue(int column) const
+{
+    return colData.at(column).defaultVal;
+}
+
 QVariant RestTableModel::headerData(int section, Qt::Orientation orientation, int role) const
 {
     if (orientation==Qt::Horizontal && role==Qt::DisplayRole){
         return colData.at(section).snam;
     }
+    if (orientation == Qt::Vertical && role == Qt::DisplayRole) {
+        if (editor->isEdt() && section==editor->currentPos()) {
+            return QString("|");
+        }
+        return (editor->isAdd() && (section==editor->currentPos()))? QString("*"): QString("  ");
+    }
     return QAbstractTableModel::headerData(section,orientation,role);
+}
+
+bool RestTableModel::setHeaderData(int section, Qt::Orientation orientation, const QVariant &value, int role)
+{
+    if (orientation==Qt::Horizontal && role==Qt::EditRole){
+        colData[section].snam=value.toString();
+        return true;
+    }
+    return QAbstractTableModel::setHeaderData(section,orientation,value,role);
 }
 
 QMetaType::Type RestTableModel::columnType(int col) const
@@ -110,17 +218,55 @@ QMetaType::Type RestTableModel::columnType(int col) const
     return getMetaType(colData.at(col).udt_name);
 }
 
+QString RestTableModel::tableName() const
+{
+    return _tablename;
+}
+
 colInfo RestTableModel::columnInfo(int col) const
 {
     return colData.at(col);
 }
 
+bool RestTableModel::isColumnRel(int col) const
+{
+    return !colData.at(col).relnam.isEmpty();
+}
+
+bool RestTableModel::isAdd() const
+{
+    return editor->isAdd();
+}
+
+bool RestTableModel::isEdt() const
+{
+    return editor->isEdt();
+}
+
+bool RestTableModel::isEmpty() const
+{
+    return (rowCount()==1 && isAdd()) || (rowCount()<1);
+}
+
+bool RestTableModel::isInsertable() const
+{
+    return insertable;
+}
+
+int RestTableModel::currentEdtRow() const
+{
+    return editor->currentPos();
+}
+
 void RestTableModel::select()
 {
     QByteArray data;
-    bool ok = HttpSyncManager::sendGet("api/elrtr/parti",data);
+    QUrlQuery query;
+    query.addQueryItem("filter",_filter);
+    bool ok = HttpSyncManager::sendGet(_path+"?"+query.toString(),data);
     if (ok) {
         beginResetModel();
+        modelData.clear();
         QJsonDocument doc = QJsonDocument::fromJson(data);
         const QJsonArray rows=doc.array();
         for (const QJsonValue &value : rows) {
@@ -137,7 +283,49 @@ void RestTableModel::select()
             modelData.push_back(row);
         }
         endResetModel();
+        emit sigRefresh();
     }
+}
+
+void RestTableModel::revert()
+{
+    block=true;
+    int r=editor->currentPos();
+    if (editor->isAdd() && rowCount()>1){
+        beginRemoveRows(QModelIndex(),r,r);
+        editor->revert();
+        endRemoveRows();
+    } else if (editor->isEdt()){
+        editor->revert();
+        emit dataChanged(this->index(r,0),this->index(r,columnCount()-1));
+        emit headerDataChanged(Qt::Vertical,r,r);
+    }
+    block=false;
+}
+
+bool RestTableModel::submitRow()
+{
+    if (block) {
+        return false;
+    }
+    if (editor->isEdt()){
+        if (editor->isAdd()){
+            if (/*insertDb()*/false) {
+                editor->submit();
+                emit sigUpd();
+                //qDebug()<<"SUBMIT_ADD";
+            }
+        } else if (!editor->isAdd()){
+            if (/*updateDb()*/false){
+                editor->submit();
+                emit sigUpd();
+                //qDebug()<<"SUBMIT_EDT";
+            }
+        }
+    } else if (editor->isAdd()){
+        revert();
+    }
+    return !(editor->isAdd() || editor->isEdt());
 }
 
 void RestTableModel::loadInfo()
@@ -160,6 +348,7 @@ void RestTableModel::loadInfo()
             inf.dec=value.toObject().value("dec").toInt();
             inf.relnam=value.toObject().value("relnam").toString();          
             inf.flags = inf.editale ? (Qt::ItemIsEditable | Qt::ItemIsSelectable | Qt::ItemIsUserCheckable | Qt::ItemIsEnabled) : (Qt::ItemIsSelectable | Qt::ItemIsUserCheckable | Qt::ItemIsEnabled);
+            inf.defaultVal=QVariant(QMetaType(getMetaType(inf.udt_name)),nullptr);
             colData.push_back(inf);
         }
     }
@@ -244,6 +433,41 @@ QVariant RestTableModel::loadEdtVal(const QJsonValue &val, const QString &udt_na
     return QVariant();
 }
 
+QString RestTableModel::formatVal(const QVariant &val, int column)
+{
+    QMetaType::Type type=columnType(column);
+    if (val.isNull()){
+        return QString("");
+    }
+    switch (type) {
+    case QMetaType::Bool: {
+        return val.toBool()? tr("Да") : tr("Нет");
+    }
+    case QMetaType::LongLong: {
+        return QLocale().toString(val.toLongLong());
+    }
+    case QMetaType::Int: {
+        return colData.at(column).checkable ? (val.toBool()? tr("Да") : tr("Нет")) : QLocale().toString(val.toInt());
+    }
+    case QMetaType::Double: {
+        return QLocale().toString(val.toDouble(),'f',colData.at(column).dec);
+    }
+    case QMetaType::QDate: {
+        return val.toDate().toString("dd.MM.yyyy");
+    }
+    case QMetaType::QTime: {
+        return val.toTime().toString("hh:mm");
+    }
+    case QMetaType::QDateTime: {
+        return val.toDateTime().toString("dd.MM.yyyy hh:mm");
+    }
+    default: {
+        return val.toString();
+    }
+    }
+    return val.toString();
+}
+
 DataEditor::DataEditor(QVector<QVector<cellData> > *data, QObject *parent) : QObject(parent), mData(data)
 {
     pos=-1;
@@ -255,7 +479,7 @@ bool DataEditor::add(int p, QVector<cellData> &row)
 {
     bool ok=false;
     if (!addFlag && !edtFlag){
-        //mData->insertRow(p,row);
+        mData->insert(p,row);
         pos=p;
         addFlag=true;
         ok=true;
@@ -270,8 +494,8 @@ bool DataEditor::edt(int row, int col, cellData val)
         pos=row;
         saveRow=mData->at(row);
     }
-
-    //mData[row][col]=val;
+    //qDebug()<<val.edit;
+    (*mData)[row][col]=val;
     edtFlag=true;
     return true;
 }
@@ -285,11 +509,11 @@ void DataEditor::submit()
 
 void DataEditor::revert()
 {
-    if ((edtFlag && !addFlag) || (addFlag && /*mData->rowCount()==1 && */edtFlag)){
-        //mData->setRow(saveRow,pos);
+    if ((edtFlag && !addFlag) || (addFlag && mData->size()==1 && edtFlag)){
+        (*mData)[pos]=saveRow;
         edtFlag=false;
-    } else if (addFlag /*&& mData->rowCount()>1*/){
-        //mData->delRow(pos);
+    } else if (addFlag && mData->size()>1){
+        mData->remove(pos);
         addFlag=false;
         edtFlag=false;
     } else {
@@ -323,9 +547,7 @@ QVector<cellData> DataEditor::newRow()
 {
     QVector<cellData> r;
     if (addFlag || edtFlag){
-        /*for (int i=0; i<mData->columnCount(); i++){
-            r.push_back(mData->column(i)->data.at(pos));
-        }*/
+        r=mData->at(pos);
     }
     return r;
 }
