@@ -68,7 +68,7 @@ QVariant RestTableModel::data(const QModelIndex &index, int role) const
 
 bool RestTableModel::setData(const QModelIndex &index, const QVariant &value, int role)
 {
-    if (!(this->flags(index) & Qt::ItemIsEditable)) {
+    if (!(this->flags(index) & Qt::ItemIsEditable) || !index.isValid()) {
         return false;
     }
     cellData setVal=modelData[index.row()][index.column()];
@@ -112,16 +112,9 @@ bool RestTableModel::insertRow(int /*row*/, const QModelIndex &/*parent*/)
     bool ok=false;
     if (!editor->isAdd() && !editor->isEdt()){
         emit sigAboutToBeInsert();
-        QVector<cellData> tmpRow;
-        for (int i=0; i<columnCount();i++){
-            cellData d;
-            d.edit=colData.at(i).defaultVal;
-            d.display=formatVal(colData.at(i).defaultVal,i);
-            d.background=QColor(255,255,255);
-            tmpRow.push_back(d);
-        }
         beginInsertRows(QModelIndex(),rowCount(),rowCount());
-        ok=editor->add(rowCount(),tmpRow);
+        QVector<cellData> row=defaultRow();
+        ok=editor->add(rowCount(),row);
         endInsertRows();
     }
     return ok;
@@ -144,7 +137,7 @@ bool RestTableModel::removeRow(int row, const QModelIndex &parent)
                                   QString::fromUtf8("Подтветждаете удаление ")+dat+QString::fromUtf8("?"),QMessageBox::Yes| QMessageBox::No);
     bool ok=false;
     if (n==QMessageBox::Yes) {
-        if (/*deleteDb(row)*/true) {
+        if (apiDelete(row)) {
             beginRemoveRows(parent,row,row);
             modelData.remove(row);
             endRemoveRows();
@@ -177,22 +170,30 @@ void RestTableModel::setInsertable(bool b)
 
 void RestTableModel::setDefaultValue(int column, QVariant value)
 {
-    colData[column].defaultVal=value;
+    if (column>=0 && column<colData.size()){
+        colData[column].defaultVal=value;
+    }
 }
 
 void RestTableModel::setColumnFlags(int column, Qt::ItemFlags flags)
 {
-    colData[column].flags=flags;
+    if (column>=0 && column<colData.size()){
+        colData[column].flags=flags;
+    }
 }
 
 QVariant RestTableModel::defaultValue(int column) const
 {
-    return colData.at(column).defaultVal;
+    if (column>=0 && column<colData.size()){
+        return colData.at(column).defaultVal;
+    } else {
+        return QVariant();
+    }
 }
 
 QVariant RestTableModel::headerData(int section, Qt::Orientation orientation, int role) const
 {
-    if (orientation==Qt::Horizontal && role==Qt::DisplayRole){
+    if (orientation==Qt::Horizontal && role==Qt::DisplayRole && section>=0 && section<colData.size()){
         return colData.at(section).snam;
     }
     if (orientation == Qt::Vertical && role == Qt::DisplayRole) {
@@ -206,7 +207,7 @@ QVariant RestTableModel::headerData(int section, Qt::Orientation orientation, in
 
 bool RestTableModel::setHeaderData(int section, Qt::Orientation orientation, const QVariant &value, int role)
 {
-    if (orientation==Qt::Horizontal && role==Qt::EditRole){
+    if (orientation==Qt::Horizontal && role==Qt::EditRole && section>=0 && section<colData.size()){
         colData[section].snam=value.toString();
         return true;
     }
@@ -225,12 +226,12 @@ QString RestTableModel::tableName() const
 
 colInfo RestTableModel::columnInfo(int col) const
 {
-    return colData.at(col);
+    return (col>=0 && col<colData.size()) ? colData.at(col) : colInfo();
 }
 
 bool RestTableModel::isColumnRel(int col) const
 {
-    return !colData.at(col).relnam.isEmpty();
+    return (col>=0 && col<colData.size()) ? (!colData.at(col).relnam.isEmpty()) : false;
 }
 
 bool RestTableModel::isAdd() const
@@ -267,6 +268,7 @@ void RestTableModel::select()
     if (ok) {
         beginResetModel();
         modelData.clear();
+        editor->revert();
         QJsonDocument doc = QJsonDocument::fromJson(data);
         const QJsonArray rows=doc.array();
         for (const QJsonValue &value : rows) {
@@ -281,6 +283,10 @@ void RestTableModel::select()
                 row.push_back(cell);
             }
             modelData.push_back(row);
+        }
+        if (!modelData.size()){
+            QVector<cellData> row=defaultRow();
+            editor->add(0,row);
         }
         endResetModel();
         emit sigRefresh();
@@ -309,18 +315,18 @@ bool RestTableModel::submitRow()
         return false;
     }
     if (editor->isEdt()){
+        bool ok=false;
         if (editor->isAdd()){
-            if (/*insertDb()*/false) {
-                editor->submit();
-                emit sigUpd();
-                //qDebug()<<"SUBMIT_ADD";
-            }
-        } else if (!editor->isAdd()){
-            if (/*updateDb()*/false){
-                editor->submit();
-                emit sigUpd();
-                //qDebug()<<"SUBMIT_EDT";
-            }
+            ok=apiInsert();
+        } else {
+            ok=apiUpdate();
+        }
+        if (ok) {
+            int r=editor->currentPos();
+            editor->submit();
+            emit dataChanged(this->index(r,0),this->index(r,columnCount()-1));
+            emit headerDataChanged(Qt::Vertical,r,r);
+            emit sigUpd();
         }
     } else if (editor->isAdd()){
         revert();
@@ -352,6 +358,52 @@ void RestTableModel::loadInfo()
             colData.push_back(inf);
         }
     }
+}
+
+bool RestTableModel::apiInsert()
+{
+    QJsonDocument doc;
+    doc.setObject(getRowObject(editor->newRow()));
+    QByteArray body = doc.toJson();
+    QByteArray data;
+    bool ok = HttpSyncManager::sendRequest(_path,"PUT",body,data,"application/json");
+    return ok;
+}
+
+bool RestTableModel::apiUpdate()
+{
+    QJsonDocument doc;
+    QJsonObject obj;
+    obj.insert("old_row",QJsonValue(getRowObject(editor->oldRow())));
+    obj.insert("new_row",QJsonValue(getRowObject(editor->newRow())));
+    doc.setObject(obj);
+    QByteArray body = doc.toJson();
+    QByteArray data;
+    bool ok = HttpSyncManager::sendRequest(_path,"POST",body,data,"application/json");
+    return ok;
+}
+
+bool RestTableModel::apiDelete(int row)
+{
+    QJsonDocument doc;
+    doc.setObject(getRowObject(modelData.at(row)));
+    QByteArray body = doc.toJson();
+    QByteArray data;
+    bool ok = HttpSyncManager::sendRequest(_path,"DELETE",body,data,"application/json");
+    return ok;
+}
+
+QVector<cellData> RestTableModel::defaultRow() const
+{
+    QVector<cellData> tmpRow;
+    for (int i=0; i<columnCount();i++){
+        cellData d;
+        d.edit=colData.at(i).defaultVal;
+        d.display=formatVal(colData.at(i).defaultVal,i);
+        d.background=QColor(255,255,255);
+        tmpRow.push_back(d);
+    }
+    return tmpRow;
 }
 
 QMetaType::Type RestTableModel::getMetaType(const QString &udt_name) const
@@ -433,7 +485,7 @@ QVariant RestTableModel::loadEdtVal(const QJsonValue &val, const QString &udt_na
     return QVariant();
 }
 
-QString RestTableModel::formatVal(const QVariant &val, int column)
+QString RestTableModel::formatVal(const QVariant &val, int column) const
 {
     QMetaType::Type type=columnType(column);
     if (val.isNull()){
@@ -459,13 +511,58 @@ QString RestTableModel::formatVal(const QVariant &val, int column)
         return val.toTime().toString("hh:mm");
     }
     case QMetaType::QDateTime: {
-        return val.toDateTime().toString("dd.MM.yyyy hh:mm");
+        return val.toDateTime().toString("dd.MM.yyyy, hh:mm");
     }
     default: {
         return val.toString();
     }
     }
     return val.toString();
+}
+
+QJsonValue RestTableModel::getJsonValue(const QVariant &val)
+{
+    if (val.isNull()){
+        return QJsonValue();
+    }
+    int type=val.typeId();
+    switch (type) {
+    case QMetaType::Bool: {
+        return QJsonValue(val.toBool());
+    }
+    case QMetaType::LongLong: {
+        return QJsonValue(val.toLongLong());
+    }
+    case QMetaType::Int: {
+        return QJsonValue(val.toInt());
+    }
+    case QMetaType::Double: {
+        return QJsonValue(val.toDouble());
+    }
+    case QMetaType::QDate: {
+        return QJsonValue(val.toDate().toString("yyyy-MM-dd"));
+    }
+    case QMetaType::QTime: {
+        return QJsonValue(val.toTime().toString("hh:mm:ss"));
+    }
+    case QMetaType::QDateTime: {
+        return QJsonValue(val.toDateTime().toString("yyyy-MM-ddThh:mm:ss"));
+    }
+    default: {
+        return val.toJsonValue();
+    }
+    }
+    return val.toJsonValue();
+}
+
+QJsonObject RestTableModel::getRowObject(const QVector<cellData> &row)
+{
+    QJsonObject obj;
+    for (int i=0; i<colData.size(); i++){
+        cellData cell = row.at(i);
+        obj.insert(colData.at(i).nam,getJsonValue(cell.edit));
+    }
+    return obj;
 }
 
 DataEditor::DataEditor(QVector<QVector<cellData> > *data, QObject *parent) : QObject(parent), mData(data)

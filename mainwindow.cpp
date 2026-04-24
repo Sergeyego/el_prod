@@ -7,11 +7,11 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
-    model = new RestTableModel("el_parti",this);
+    model = new RestTableModel("test",this);
 
-    model->setPath("api/elrtr/parti");
+    //model->setPath("api/elrtr/parti");
 
-    model->setFilter(model->tableName()+".dat_part between '2026-01-01' and '2026-12-31'");
+    model->setFilter(model->tableName()+".id>0");
 
     model->setDefaultValue(1,"1111");
     model->setHeaderData(0,Qt::Horizontal,tr("id_part"),Qt::DisplayRole);
@@ -44,5 +44,5 @@ void MainWindow::getData()
 void MainWindow::setDefaultValue()
 {
     model->setDefaultValue(1,"2222");
-    model->setDefaultValue(2,QDate::currentDate());
+    model->setDefaultValue(6,QDate::currentDate());
 }

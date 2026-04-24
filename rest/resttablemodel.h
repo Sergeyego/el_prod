@@ -103,9 +103,15 @@ private:
     bool block;
     bool insertable;
     void loadInfo();
+    bool apiInsert();
+    bool apiUpdate();
+    bool apiDelete(int row);
+    QVector<cellData> defaultRow() const;
     QMetaType::Type getMetaType(const QString &udt_name) const;
     QVariant loadEdtVal(const QJsonValue &val, const QString &udt_name) const;
-    QString formatVal(const QVariant &val, int column);
+    QString formatVal(const QVariant &val, int column) const;
+    QJsonValue getJsonValue(const QVariant &val);
+    QJsonObject getRowObject(const QVector<cellData> &row);
 
 signals:
     void sigUpd();
