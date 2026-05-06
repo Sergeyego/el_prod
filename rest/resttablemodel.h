@@ -42,7 +42,7 @@ class DataEditor : public QObject
     Q_OBJECT
 public:
     DataEditor(QVector<QVector<cellData>> *data, QObject *parent=nullptr);
-    bool add(int p, QVector<cellData> &row);
+    bool add(int p, const QVector<cellData> &row);
     bool edt(int row, int col, cellData val);
     void submit();
     void revert();
@@ -106,6 +106,7 @@ private:
     bool apiInsert();
     bool apiUpdate();
     bool apiDelete(int row);
+    QVector<cellData> loadRow(const QJsonValue &val) const;
     QVector<cellData> defaultRow() const;
     QMetaType::Type getMetaType(const QString &udt_name) const;
     QVariant loadEdtVal(const QJsonValue &val, const QString &udt_name) const;
