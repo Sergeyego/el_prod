@@ -414,7 +414,11 @@ bool RestTableModel::apiDelete(int row)
 QVector<cellData> RestTableModel::loadRow(const QJsonValue &val) const
 {
     QVector<cellData> row;
+#if (QT_VERSION < QT_VERSION_CHECK(6, 0, 0))
     for (const colInfo &col : qAsConst(colData)){
+#else
+    for (const colInfo &col : std::as_const(colData)){
+#endif
         QJsonObject obj = val.toObject().value(col.nam).toObject();
         cellData cell;
         cell.display=obj.value("display_role").toString();
@@ -558,7 +562,11 @@ QJsonValue RestTableModel::getJsonValue(const QVariant &val)
     if (val.isNull()){
         return QJsonValue();
     }
+#if (QT_VERSION < QT_VERSION_CHECK(6, 0, 0))
+    int type=val.type();
+#else
     int type=val.typeId();
+#endif
     switch (type) {
     case QMetaType::Bool: {
         return QJsonValue(val.toBool());
