@@ -12,12 +12,12 @@
 #include "rest/resttablemodel.h"
 #include "rest/relmodels.h"
 
-class CustomCompletter : public QCompleter
+class CustomOnlineCompletter : public QCompleter
 {
     Q_OBJECT
 public:
-    CustomCompletter(QObject *parent=nullptr);
-    ~CustomCompletter();
+    CustomOnlineCompletter(QObject *parent=nullptr);
+    ~CustomOnlineCompletter();
     bool eventFilter(QObject *o, QEvent *e);
     void setModel(QAbstractItemModel *c);
     void setWidget(QWidget *widget);
@@ -27,6 +27,15 @@ private slots:
     void actFinished(QString s);
 signals:
     void currentDataChanged(colVal d);
+};
+
+class CustomOfflineCompletter : public QCompleter
+{
+    Q_OBJECT
+public:
+    CustomOfflineCompletter(QObject *parent=nullptr);
+    ~CustomOfflineCompletter();
+    bool eventFilter(QObject *o, QEvent *e);
 };
 
 class RestComboBox : public QComboBox
@@ -39,7 +48,7 @@ public:
     void setIndex(const QModelIndex &index);
     void setModel(QAbstractItemModel *model);
 private:
-    CustomCompletter *restCompleter;
+    //CustomCompletter *restCompleter;
     colVal currentData;
     colVal saveData;
     QAction *actionEdt;

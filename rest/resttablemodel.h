@@ -98,10 +98,12 @@ private:
     DataEditor *editor;
     QVector<QVector<cellData>> modelData;
     QVector<colInfo> colData;
+    QMap<QString,colInfo> colMap;
     QString _path;
     QString _rname;
     QString _tablename;
     QString _filter;
+    QStringList _columns;
     bool block;
     bool insertable;
     void loadInfo();

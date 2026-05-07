@@ -16,6 +16,7 @@ SOURCES += \
     rest/restdateedit.cpp \
     rest/restitemdelegate.cpp \
     rest/restlogin.cpp \
+    rest/restmapper.cpp \
     rest/restrelmodel.cpp \
     rest/resttablemodel.cpp \
     rest/resttableview.cpp
@@ -29,6 +30,7 @@ HEADERS += \
     rest/restdateedit.h \
     rest/restitemdelegate.h \
     rest/restlogin.h \
+    rest/restmapper.h \
     rest/restrelmodel.h \
     rest/resttablemodel.h \
     rest/resttableview.h

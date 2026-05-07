@@ -12,7 +12,7 @@ RestTableModel::RestTableModel(QString name, QObject *parent) : QAbstractTableMo
 
 Qt::ItemFlags RestTableModel::flags(const QModelIndex &index) const
 {
-    return colData.at(index.column()).flags;
+    return /*colData.at(index.column()).flags;*/colMap.value(_columns.at(index.column())).flags;
 }
 
 QVariant RestTableModel::data(const QModelIndex &index, int role) const
@@ -47,12 +47,12 @@ QVariant RestTableModel::data(const QModelIndex &index, int role) const
     case Qt::TextAlignmentRole:
     {
         QMetaType::Type colType = columnType(index.column());
-        value=((colType==QMetaType::Int || colType==QMetaType::Double || colType==QMetaType::LongLong) && colData.at(index.column()).relnam.isEmpty())? int(Qt::AlignRight | Qt::AlignVCenter) : int(Qt::AlignLeft | Qt::AlignVCenter);
+        value=((colType==QMetaType::Int || colType==QMetaType::Double || colType==QMetaType::LongLong) && !isColumnRel(index.column()))? int(Qt::AlignRight | Qt::AlignVCenter) : int(Qt::AlignLeft | Qt::AlignVCenter);
         break;
     }
     case Qt::CheckStateRole:
     {
-        if (colData.at(index.column()).checkable){
+        if (columnInfo(index.column()).checkable){
             value = cell.edit.toBool() ? Qt::Checked : Qt::Unchecked;
         } else {
             value = QVariant();
@@ -101,7 +101,7 @@ int RestTableModel::rowCount(const QModelIndex &/*parent*/) const
 
 int RestTableModel::columnCount(const QModelIndex &/*parent*/) const
 {
-    return colData.size();
+    return /*colData.size()*/_columns.size();
 }
 
 bool RestTableModel::insertRow(int /*row*/, const QModelIndex &/*parent*/)
@@ -360,6 +360,8 @@ void RestTableModel::loadInfo()
             inf.flags = inf.editale ? (Qt::ItemIsEditable | Qt::ItemIsSelectable | Qt::ItemIsUserCheckable | Qt::ItemIsEnabled) : (Qt::ItemIsSelectable | Qt::ItemIsUserCheckable | Qt::ItemIsEnabled);
             inf.defaultVal=nullValue(inf.udt_name);
             colData.push_back(inf);
+            _columns.push_back(inf.nam);
+            colMap.insert(inf.nam,inf);
         }
     }
 }

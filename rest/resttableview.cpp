@@ -115,8 +115,8 @@ int RestTableView::getSpace(int column)
     RestTableModel *restModel = qobject_cast<RestTableModel *>(this->model());
     if (restModel){
         QMetaType::Type type = restModel->columnType(column);
-        if (type==QMetaType::QDate || type==QMetaType::QDateTime){
-            space+=7;
+        if (type==QMetaType::QDate || type==QMetaType::QDateTime || type==QMetaType::QTime){
+            space+=5;
         } else if (restModel->isColumnRel(column)){
             space+=17;
         }

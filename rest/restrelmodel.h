@@ -7,6 +7,7 @@
 #include <QJsonArray>
 #include <QUrlQuery>
 #include "rest/restconnection.h"
+#include "rest/httpsyncmanager.h"
 
 class RestRelModel : public QAbstractTableModel
 {
@@ -17,6 +18,8 @@ public:
     int rowCount(const QModelIndex &parent) const;
     int columnCount(const QModelIndex &parent) const;
     QString getName() const;
+    bool isLimited();
+
 public slots:
     void refresh();
     void refreshByPattern(QString pattern);
@@ -29,6 +32,7 @@ private:
     QString _name;
     QNetworkAccessManager *manager;
     QVector<QVector<QVariant>> _data;
+    bool _is_limited;
 
 private slots:
     void onResult(QNetworkReply *reply);

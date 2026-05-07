@@ -2,6 +2,14 @@
 
 RestRelModel::RestRelModel(QString name, QObject *parent) : QAbstractTableModel(parent), _name(name)
 {
+    _is_limited=false;
+    QByteArray data;
+    bool ok = HttpSyncManager::sendGet("api/autorest/relinfo/"+_name,data);
+    if (ok){
+        QJsonDocument doc = QJsonDocument::fromJson(data);
+        _is_limited = !doc.object().value("lim").isNull();
+    }
+    //qDebug()<<_name<<_is_limited;
     manager = new QNetworkAccessManager(this);
     connect(manager,SIGNAL(finished(QNetworkReply*)),this,SLOT(onResult(QNetworkReply*)));
 }
@@ -30,6 +38,11 @@ int RestRelModel::columnCount(const QModelIndex &/*parent*/) const
 QString RestRelModel::getName() const
 {
     return _name;
+}
+
+bool RestRelModel::isLimited()
+{
+    return _is_limited;
 }
 
 void RestRelModel::refresh()

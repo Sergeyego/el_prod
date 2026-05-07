@@ -238,8 +238,8 @@ bool RestItemDelegate::eventFilter(QObject *object, QEvent *event)
         if (line){
             emit commitData(line);
             emit closeEditor(line);
+            return false;
         }
-        return false;
     }
     if (event->type()==QEvent::KeyPress){
         QKeyEvent *keyEvent = static_cast<QKeyEvent *>(event);
