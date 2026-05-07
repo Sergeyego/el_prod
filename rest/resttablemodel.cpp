@@ -477,14 +477,14 @@ QVariant RestTableModel::loadEdtVal(const QJsonValue &val, const QString &udt_na
 {
     QMetaType::Type type=getMetaType(udt_name);
     if (val.isNull()){
-        return QVariant(QMetaType(type),nullptr);
+        return nullValue(udt_name);
     }
     switch (type) {
     case QMetaType::Bool: {
         return val.toBool();
     }
     case QMetaType::LongLong: {
-        return val.toInteger();
+        return val.toVariant().toLongLong();
     }
     case QMetaType::Int: {
         return val.toInt();
