@@ -109,6 +109,21 @@ void RestTableView::contextMenuEvent(QContextMenuEvent *event)
     }
 }
 
+int RestTableView::getSpace(int column)
+{
+    int space=23;
+    RestTableModel *restModel = qobject_cast<RestTableModel *>(this->model());
+    if (restModel){
+        QMetaType::Type type = restModel->columnType(column);
+        if (type==QMetaType::QDate || type==QMetaType::QDateTime){
+            space+=7;
+        } else if (restModel->isColumnRel(column)){
+            space+=17;
+        }
+    }
+    return space;
+}
+
 void RestTableView::resizeToContents()
 {
     if (!model()) return;
@@ -146,7 +161,7 @@ void RestTableView::resizeToContents()
         if (max>300) {
             max=300;
         }
-        setColumnWidth(i,max+22);
+        setColumnWidth(i,max+getSpace(i));
     }
 }
 

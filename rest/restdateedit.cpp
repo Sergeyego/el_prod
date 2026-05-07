@@ -41,7 +41,7 @@ RestDateTimeEdit::RestDateTimeEdit(QWidget *parent) : QDateTimeEdit(parent)
     this->setCalendarPopup(true);
     CustomCalendarWidget * pCW = new CustomCalendarWidget(this);
     this->setCalendarWidget(pCW);
-    this->setDisplayFormat("dd.MM.yyyy hh:mm");
+    this->setDisplayFormat("dd.MM.yy hh:mm");
     this->setSpecialValueText("NULL");
     connect(this->lineEdit(),SIGNAL(textChanged(QString)),this,SLOT(txtChangeSlot(QString)));
     connect(pCW,SIGNAL(shown()),this,SLOT(shVid()));

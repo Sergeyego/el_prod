@@ -24,6 +24,7 @@ private:
     QAction *removeAct;
     bool menuEnabled;
     bool writeOk;
+    int getSpace(int column);
 
 public slots:
     void resizeToContents();

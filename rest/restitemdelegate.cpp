@@ -51,6 +51,13 @@ QWidget* RestItemDelegate::createEditor(QWidget *parent, const QStyleOptionViewI
             editor = new RestDateTimeEdit(parent);
             break;
         }
+        case QMetaType::QTime:
+        {
+            QTimeEdit *te = new QTimeEdit(parent);
+            te->setDisplayFormat("hh:mm:ss");
+            editor = te;
+            break;
+        }
         default:
         {
             editor=QItemDelegate::createEditor(parent, option, index);
@@ -171,7 +178,7 @@ void RestItemDelegate::setModelData(QWidget *editor, QAbstractItemModel *model, 
             if (combo) {
                 colVal data=combo->getCurrentData();
                 if (combo->currentText().isEmpty()){
-                    data.val=QVariant(QMetaType(type),nullptr);
+                    data.val=restTableModel->nullValue(index.column());
                     data.disp=QString();
                 }
                 restTableModel->setData(index,data.val,Qt::EditRole);
@@ -182,7 +189,7 @@ void RestItemDelegate::setModelData(QWidget *editor, QAbstractItemModel *model, 
             QLineEdit *le = qobject_cast<QLineEdit *>(editor);
             if (le){
                 if (le->text().isEmpty()) {
-                    restTableModel->setData(index,QVariant(QMetaType(type),nullptr),Qt::EditRole);
+                    restTableModel->setData(index,restTableModel->nullValue(index.column()),Qt::EditRole);
                     return;
                 } else {
                     if (type==QMetaType::Int){
@@ -201,7 +208,7 @@ void RestItemDelegate::setModelData(QWidget *editor, QAbstractItemModel *model, 
                 RestDateEdit *dateEdit = qobject_cast<RestDateEdit *>(editor);
                 if (dateEdit){
                     if (dateEdit->date()==dateEdit->minimumDate()){
-                        restTableModel->setData(index,QVariant(QMetaType(type),nullptr),Qt::EditRole);
+                        restTableModel->setData(index,restTableModel->nullValue(index.column()),Qt::EditRole);
                     } else {
                         restTableModel->setData(index,dateEdit->date(),Qt::EditRole);
                     }
@@ -212,7 +219,7 @@ void RestItemDelegate::setModelData(QWidget *editor, QAbstractItemModel *model, 
                 RestDateTimeEdit *dateTimeEdit = qobject_cast<RestDateTimeEdit *>(editor);
                 if (dateTimeEdit){
                     if (dateTimeEdit->dateTime()==dateTimeEdit->minimumDateTime()){
-                        restTableModel->setData(index,QVariant(QMetaType(type),nullptr),Qt::EditRole);
+                        restTableModel->setData(index,restTableModel->nullValue(index.column()),Qt::EditRole);
                     } else {
                         restTableModel->setData(index,dateTimeEdit->dateTime(),Qt::EditRole);
                     }
@@ -226,7 +233,15 @@ void RestItemDelegate::setModelData(QWidget *editor, QAbstractItemModel *model, 
 
 bool RestItemDelegate::eventFilter(QObject *object, QEvent *event)
 {
-    if (event->type()== QEvent::KeyPress){
+    if (event->type()==QEvent::FocusOut){
+        QLineEdit *line = qobject_cast<QLineEdit *>(object);
+        if (line){
+            emit commitData(line);
+            emit closeEditor(line);
+        }
+        return false;
+    }
+    if (event->type()==QEvent::KeyPress){
         QKeyEvent *keyEvent = static_cast<QKeyEvent *>(event);
 
         if(keyEvent->text()=="\r" || keyEvent->key()==Qt::Key_Tab || keyEvent->key()==Qt::Key_Down || keyEvent->key()==Qt::Key_Up){

@@ -182,6 +182,21 @@ void RestTableModel::setColumnFlags(int column, Qt::ItemFlags flags)
     }
 }
 
+QVariant RestTableModel::nullValue(const QString &udt_name) const
+{
+#if (QT_VERSION < QT_VERSION_CHECK(6, 0, 0))
+    QVariant::Type type = (QVariant::Type) getMetaType(udt_name);
+    return QVariant(type);
+#else
+    return QVariant(QMetaType(getMetaType(udt_name)),nullptr);
+#endif
+}
+
+QVariant RestTableModel::nullValue(int column) const
+{
+    return nullValue(colData.at(column).udt_name);
+}
+
 QVariant RestTableModel::defaultValue(int column) const
 {
     if (column>=0 && column<colData.size()){
@@ -343,7 +358,7 @@ void RestTableModel::loadInfo()
             inf.dec=value.toObject().value("dec").toInt();
             inf.relnam=value.toObject().value("relnam").toString();          
             inf.flags = inf.editale ? (Qt::ItemIsEditable | Qt::ItemIsSelectable | Qt::ItemIsUserCheckable | Qt::ItemIsEnabled) : (Qt::ItemIsSelectable | Qt::ItemIsUserCheckable | Qt::ItemIsEnabled);
-            inf.defaultVal=QVariant(QMetaType(getMetaType(inf.udt_name)),nullptr);
+            inf.defaultVal=nullValue(inf.udt_name);
             colData.push_back(inf);
         }
     }
