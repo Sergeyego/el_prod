@@ -13,8 +13,12 @@ MainWindow::MainWindow(QWidget *parent)
 
     model->setFilter(model->tableName()+".id>0");
 
-    model->setDefaultValue(1,"1111");
-    model->setHeaderData(0,Qt::Horizontal,tr("id_part"),Qt::DisplayRole);
+    //model->setDefaultValue("val_int","1111");
+    model->setHeaderData(0,Qt::Horizontal,tr("id_part"),Qt::EditRole);
+
+    QStringList c;
+    c<<"col_date"<<"col_rel"<<"col_int"<<"id";
+    model->setColumns(c);
 
     relModel = RelModels::instance()->getModel("mark");
     ui->comboBox->setModel(relModel);
@@ -43,6 +47,9 @@ void MainWindow::getData()
 
 void MainWindow::setDefaultValue()
 {
-    model->setDefaultValue(1,"2222");
-    model->setDefaultValue(6,QDate::currentDate());
+    model->setDefaultValue("col_int","2222");
+    model->setDefaultValue("col_date",QDate::currentDate());
+    //model->setDefaultValue("col_rel",3);
+    //qDebug()<<model->columnIndex("col_date");
+    //model->refreshRow(model->rowCount()-1);
 }

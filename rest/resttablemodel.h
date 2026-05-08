@@ -71,11 +71,13 @@ public:
     int columnCount(const QModelIndex &parent=QModelIndex()) const;
     virtual bool insertRow(int row, const QModelIndex &parent=QModelIndex());
     virtual bool removeRow(int row, const QModelIndex &parent=QModelIndex());
+    virtual bool refreshRow(int row);
     void setFilter(QString f);
     void setPath(QString p);
     void setInsertable(bool b);
-    void setDefaultValue(int column, QVariant value);
-    void setColumnFlags(int column, Qt::ItemFlags flags);
+    void setDefaultValue(QString column, QVariant value);
+    void setColumnFlags(QString column, Qt::ItemFlags flags);
+    void setColumns(const QStringList &cols);
     QVariant nullValue(const QString &udt_name) const;
     QVariant nullValue(int column) const;
     QVariant defaultValue(int column) const;
@@ -90,6 +92,7 @@ public:
     bool isEmpty() const;
     bool isInsertable() const;
     int currentEdtRow() const;
+    int columnIndex(QString nam) const;
 public slots:
     virtual void select();
     virtual void revert();
@@ -97,7 +100,6 @@ public slots:
 private:
     DataEditor *editor;
     QVector<QVector<cellData>> modelData;
-    QVector<colInfo> colData;
     QMap<QString,colInfo> colMap;
     QString _path;
     QString _rname;

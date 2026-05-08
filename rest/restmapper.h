@@ -22,11 +22,11 @@ public:
     void addUnLock(QWidget *widget);
     void addEmptyLock(QWidget *widget);
     bool isLock();
-    void addMapping(QWidget *widget, int section);
+    void addMapping(QWidget *widget, QString section);
     int currentIndex();
     void setDefaultFocus(int n);
     void setItemDelegate(QAbstractItemDelegate *delegate);
-    QVariant modelData(int row, int column);
+    QVariant modelData(int row, QString column);
     
 private:
     QVector <QWidget*> lock1;

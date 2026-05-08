@@ -109,7 +109,7 @@ bool RestMapper::isLock()
     return (cmdWrite->isEnabled());
 }
 
-void RestMapper::addMapping(QWidget *widget, int section)
+void RestMapper::addMapping(QWidget *widget, QString section)
 {
     QPalette pal=widget->palette();
     pal.setColor(QPalette::Disabled, QPalette::Text, pal.color(QPalette::Active,QPalette::Text));
@@ -118,7 +118,15 @@ void RestMapper::addMapping(QWidget *widget, int section)
     widget->setEnabled(false);
     widget->setPalette(pal);
     addUnLock(widget);
-    mapper->addMapping(widget,section);
+    RestTableModel *restModel = qobject_cast<RestTableModel *>(mapper->model());
+    if (restModel) {
+        int ind=restModel->columnIndex(section);
+        if (ind>=0){
+            mapper->addMapping(widget,ind);
+        } else {
+            qDebug()<<"Not found: "+section;
+        }
+    }
 }
 
 int RestMapper::currentIndex()
@@ -136,10 +144,17 @@ void RestMapper::setItemDelegate(QAbstractItemDelegate *delegate)
     mapper->setItemDelegate(delegate);
 }
 
-QVariant RestMapper::modelData(int row, int column)
+QVariant RestMapper::modelData(int row, QString column)
 {
-    QAbstractItemModel *model = mapper->model();
-    return model? model->data(mapper->model()->index(row,column),Qt::EditRole) : QVariant();
+    QVariant value;
+    RestTableModel *restModel = qobject_cast<RestTableModel *>(mapper->model());
+    if (restModel) {
+        int ind=restModel->columnIndex(column);
+        if (ind>=0){
+            value=restModel->data(restModel->index(row,ind),Qt::EditRole);
+        }
+    }
+    return value;
 }
 
 void RestMapper::refresh()
@@ -191,6 +206,10 @@ void RestMapper::slotNew()
 
 void RestMapper::slotEdt()
 {
+    RestTableModel *restModel = qobject_cast<RestTableModel *>(mapper->model());
+    if (restModel) {
+        restModel->refreshRow(mapper->currentIndex());
+    }
     lock(true);
 }
 

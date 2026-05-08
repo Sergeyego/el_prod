@@ -3,6 +3,7 @@
 RestRelModel::RestRelModel(QString name, QObject *parent) : QAbstractTableModel(parent), _name(name)
 {
     _is_limited=false;
+    _path="api/autorest/relations/"+_name;
     QByteArray data;
     bool ok = HttpSyncManager::sendGet("api/autorest/relinfo/"+_name,data);
     if (ok){
@@ -45,6 +46,11 @@ bool RestRelModel::isLimited()
     return _is_limited;
 }
 
+void RestRelModel::setPath(QString p)
+{
+    _path=p;
+}
+
 void RestRelModel::refresh()
 {
     refreshByPattern("");
@@ -54,7 +60,7 @@ void RestRelModel::refreshByPattern(QString pattern)
 {
     QUrlQuery query;
     query.addQueryItem("like",pattern);
-    QUrl url = QUrl(RestConnection::instance()->getUrl()+"/api/autorest/relations/"+_name);
+    QUrl url = QUrl(RestConnection::instance()->getUrl()+"/"+_path);
     url.setQuery(query);
 
     QNetworkRequest request(url);

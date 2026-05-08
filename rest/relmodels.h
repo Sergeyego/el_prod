@@ -20,7 +20,6 @@ private:
     static RelModels *relModels_instance;
     QMap <QString, RestRelModel*> map;
 
-signals:
 };
 
 #endif // RELMODELS_H

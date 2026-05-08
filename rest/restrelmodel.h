@@ -19,6 +19,7 @@ public:
     int columnCount(const QModelIndex &parent) const;
     QString getName() const;
     bool isLimited();
+    void setPath(QString p);
 
 public slots:
     void refresh();
@@ -33,6 +34,7 @@ private:
     QNetworkAccessManager *manager;
     QVector<QVector<QVariant>> _data;
     bool _is_limited;
+    QString _path;
 
 private slots:
     void onResult(QNetworkReply *reply);
