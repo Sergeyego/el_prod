@@ -2,10 +2,13 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QAction>
 #include "rest/httpsyncmanager.h"
 #include "rest/resttablemodel.h"
 #include "rest/restrelmodel.h"
 #include "rest/relmodels.h"
+#include "tabmanager.h"
+#include"formpart/formpart.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -23,11 +26,12 @@ public:
 
 private:
     Ui::MainWindow *ui;
-    RestTableModel *model;
-    RestRelModel *relModel;
+    TabManager *tabManager;
+    void actAction(QAction *a, void (MainWindow::*sl)());
+    void loadSettings();
+    void saveSettings();
 
 private slots:
-    void getData();
-    void setDefaultValue();
+    void newFormPart();
 };
 #endif // MAINWINDOW_H

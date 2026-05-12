@@ -154,6 +154,7 @@ bool RestTableModel::removeRow(int row, const QModelIndex &parent)
 
 bool RestTableModel::refreshRow(int row)
 {
+    //qDebug()<<"refresh row";
     QJsonDocument doc;
     QJsonObject obj;
     obj.insert("old_row",QJsonValue(getRowObject(modelData.at(row))));
@@ -166,6 +167,7 @@ bool RestTableModel::refreshRow(int row)
     const QJsonArray rows = rowdoc.array();
     if (ok && rows.size()){
         modelData[row] = loadRow(rows.at(0));
+        emit dataChanged(this->index(row,0),this->index(row,columnCount()-1));
     }
     return ok;
 }
@@ -352,8 +354,10 @@ bool RestTableModel::submitRow()
     if (editor->isEdt()){
         bool ok=false;
         if (editor->isAdd()){
+            //qDebug()<<"insert!";
             ok=apiInsert();
         } else {
+            //qDebug()<<"update!";
             ok=apiUpdate();
         }
         if (ok) {
@@ -402,6 +406,7 @@ bool RestTableModel::apiInsert()
     doc.setObject(getRowObject(editor->newRow()));
     QByteArray body = doc.toJson();
     QByteArray data;
+    //qDebug()<<body;
     bool ok = HttpSyncManager::sendRequest(_path,"POST",body,data,"application/json");
     QJsonDocument rowdoc = QJsonDocument::fromJson(data);
     const QJsonArray rows = rowdoc.array();

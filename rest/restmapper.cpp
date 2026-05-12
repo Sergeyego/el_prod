@@ -52,7 +52,6 @@ RestMapper::RestMapper(QAbstractItemView *v, QWidget *parent) :
     connect(cmdEdt,SIGNAL(clicked()),this,SLOT(slotEdt()));
     connect(cmdEsc,SIGNAL(clicked()),this,SLOT(slotEsc()));
     connect(cmdDel,SIGNAL(clicked()),this,SLOT(slotDel()));
-    connect(mapper->itemDelegate(),SIGNAL(commitData(QWidget*)),this,SLOT(slotEdt()));
     connect(viewer->selectionModel(),SIGNAL(currentRowChanged(QModelIndex,QModelIndex)),mapper,SLOT(setCurrentModelIndex(QModelIndex)));
     connect(mapper,SIGNAL(currentIndexChanged(int)),this,SIGNAL(currentIndexChanged(int)));
 
@@ -182,13 +181,11 @@ void RestMapper::setCurrentViewRow(int row)
     viewer->scrollTo(viewer->currentIndex());
 }
 
-
 void RestMapper::slotNew()
 {
     RestTableModel *restModel = qobject_cast<RestTableModel *>(mapper->model());
     if (restModel) {
         restModel->insertRow(restModel->rowCount());
-        mapper->toLast();
         setCurrentViewRow(restModel->rowCount()-1);
         if (restModel->isAdd()) lock(true);
         if (!defaultFocus){
@@ -222,14 +219,12 @@ void RestMapper::slotDel()
     checkEmpty();
 }
 
-
 void RestMapper::slotWrite()
 {
     RestTableModel *restModel = qobject_cast<RestTableModel *>(mapper->model());
     if (restModel) {
-        this->setFocus();
-        mapper->submit();
-        bool ok=restModel->submitRow();
+        bool ok = mapper->submit();
+        ok = restModel->submitRow();
         if (ok) {
             lock(false);
         }
@@ -243,7 +238,6 @@ void RestMapper::slotWrite()
 void RestMapper::slotEsc()
 {
     RestTableModel *restModel = qobject_cast<RestTableModel *>(mapper->model());
-    this->setFocus();
     if (restModel){
         if (restModel->isAdd()) {
             restModel->revert();
@@ -253,18 +247,15 @@ void RestMapper::slotEsc()
         }
     }
     lock(false);
-    mapper->setCurrentIndex(mapper->currentIndex());
     checkEmpty();
 }
 
 void RestMapper::first()
 {
-    mapper->toFirst();
     setCurrentViewRow(0);
 }
 
 void RestMapper::last()
 {
-    mapper->toLast();
     setCurrentViewRow(mapper->model()->rowCount()-1);
 }

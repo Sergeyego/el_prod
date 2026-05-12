@@ -1,0 +1,433 @@
+#include "formpart.h"
+#include "ui_formpart.h"
+
+FormPart::FormPart(QWidget *parent) :
+    QWidget(parent),
+    ui(new Ui::FormPart)
+{
+    ui->setupUi(this);
+
+    loadSettings();
+
+    ui->dateEditBeg->setDate(QDate(QDate::currentDate().year(),1,1));
+    ui->dateEditEnd->setDate(QDate(QDate::currentDate().year(),12,31));
+
+    modelPart = new RestTableModel("el_parti",this);
+    modelPart->setPath("api/elrtr/parti");
+
+    ui->tableViewPart->setModel(modelPart);
+
+    ui->tableViewPart->setColumnHidden(0,true);
+    for (int i=7; i<ui->tableViewPart->model()->columnCount(); i++){
+        ui->tableViewPart->setColumnHidden(i,true);
+    }
+
+    mapper = new RestMapper(ui->tableViewPart,this);
+
+    mapper->addMapping(ui->lineEditPart,"n_s");
+    mapper->addMapping(ui->dateEditPart,"dat_part");
+    mapper->addMapping(ui->comboBoxMark,"id_el");
+    mapper->addMapping(ui->lineEditDiam,"diam");
+    mapper->addMapping(ui->comboBoxSrc,"id_ist");
+    mapper->addMapping(ui->comboBoxVar,"id_var");
+    mapper->addMapping(ui->lineEditPlan,"plan");
+    mapper->addMapping(ui->comboBoxRcp,"id_rcp");
+    mapper->addMapping(ui->comboBoxWire,"id_prfact");
+    mapper->addMapping(ui->lineEditpartWire,"parti_prov");
+    mapper->addMapping(ui->comboBoxPack,"id_pack");
+    mapper->addMapping(ui->comboBoxLen,"id_long");
+    mapper->addMapping(ui->plainTextEditNote,"prim");
+    mapper->addMapping(ui->lineEditPlot,"dens");
+    mapper->addMapping(ui->lineEditVyaz,"visc");
+    mapper->addMapping(ui->lineEditObm,"liq_glass");
+    mapper->addMapping(ui->lineEditOst,"dry_rst");
+    mapper->addMapping(ui->lineEditKfmp,"kfmp");
+    mapper->addMapping(ui->lineEditDl,"le");
+    mapper->addMapping(ui->lineEditPokr,"lo");
+    mapper->addMapping(ui->lineEditFil,"dfil");
+    mapper->addMapping(ui->lineEditDel,"del");
+    mapper->addMapping(ui->lineEditMassDry,"mas_dry");
+    mapper->addMapping(ui->lineEditMassGl,"mas_lqgl");
+
+    mapper->setDefaultFocus(1);
+    mapper->addLock(ui->dateEditBeg);
+    mapper->addLock(ui->dateEditEnd);
+    mapper->addLock(ui->pushButtonUpd);
+    mapper->addLock(ui->comboBoxOnly);
+    mapper->addEmptyLock(ui->tableViewGlass);
+    mapper->addEmptyLock(ui->tableViewGlassPar);
+    mapper->addEmptyLock(ui->tableViewGlassData);
+    mapper->addEmptyLock(ui->tableViewDoz);
+    mapper->addEmptyLock(ui->tableViewDozDef);
+    mapper->addEmptyLock(ui->tableViewPress);
+    mapper->addEmptyLock(ui->tableViewChem);
+    mapper->addEmptyLock(ui->tableViewMech);
+    mapper->addEmptyLock(ui->pushButtonChem);
+    mapper->addEmptyLock(ui->pushButtonSamp);
+    mapper->addEmptyLock(ui->checkBoxOnly);
+    mapper->addEmptyLock(ui->comboBoxChemDev);
+
+    ui->horizontalLayoutMapper->insertWidget(0,mapper);
+
+    connect(mapper,SIGNAL(currentIndexChanged(int)),this,SLOT(refreshCont(int)));
+    connect(ui->pushButtonUpd,SIGNAL(clicked(bool)),this,SLOT(updPart()));
+
+    updPart();
+
+    /*modelGlass = new DbTableModel("acc_glyba",this);
+    modelGlass->addColumn("id","id");
+    modelGlass->addColumn("id_part","id_part");
+    modelGlass->addColumn("id_glyb_part",QString::fromUtf8("Стекло"),Rels::instance()->relGlass);
+    modelGlass->addColumn("id_cons",QString::fromUtf8("Расходник"),Rels::instance()->relCons);
+    modelGlass->setSort("acc_glyba.id");
+
+    ui->tableViewGlass->setModel(modelGlass);
+    ui->tableViewGlass->setColumnHidden(0,true);
+    ui->tableViewGlass->setColumnHidden(1,true);
+    ui->tableViewGlass->setColumnWidth(2,100);
+    ui->tableViewGlass->setColumnWidth(3,100);
+
+    modelZam = new DbTableModel("parti_mix",this);
+    modelZam->addColumn("id_part","id_part");
+    modelZam->addColumn("id_dos",QString::fromUtf8("Партия дозировки"),Rels::instance()->relDos);
+    modelZam->addColumn("kvo",QString::fromUtf8("К-во, кг"));
+    modelZam->setSort("parti_mix.id_dos");
+
+    ui->tableViewDoz->setModel(modelZam);
+    ui->tableViewDoz->setColumnHidden(0,true);
+    ui->tableViewDoz->setColumnWidth(1,320);
+    ui->tableViewDoz->setColumnWidth(2,80);
+
+    modelZamBreak = new DbTableModel("parti_zam_break",this);
+    modelZamBreak->addColumn("id_part","id_part");
+    modelZamBreak->addColumn("dat",QString::fromUtf8("Дата"));
+    modelZamBreak->addColumn("kvo",QString::fromUtf8("В брак, кг"));
+    modelZamBreak->setSort("parti_zam_break.dat");
+
+    ui->tableViewDozDef->setModel(modelZamBreak);
+    ui->tableViewDozDef->setColumnHidden(0,true);
+    ui->tableViewDozDef->setColumnWidth(1,80);
+    ui->tableViewDozDef->setColumnWidth(2,70);
+
+    modelRab = new DbTableModel("part_prod",this);
+    modelRab->addColumn("id","id");
+    modelRab->addColumn("id_part","id_part");
+    modelRab->addColumn("dat",QString::fromUtf8("Дата"));
+    modelRab->addColumn("id_press",QString::fromUtf8("Пресс"),Rels::instance()->relPress);
+    modelRab->addColumn("id_brig",QString::fromUtf8("Бригадир"),Rels::instance()->relRab);
+    modelRab->addColumn("kvo",QString::fromUtf8("Кол-во,кг"));
+    modelRab->addColumn("davl",QString::fromUtf8("Давлен."));
+    modelRab->addColumn("loss",QString::fromUtf8("Отх.ших."));
+    modelRab->addColumn("rods",QString::fromUtf8("Пров.,кг"));
+    modelRab->addColumn("garb",QString::fromUtf8("Отх.мус."));
+    modelRab->setSort("part_prod.dat");
+
+    ui->tableViewPress->setModel(modelRab);
+    ui->tableViewPress->setColumnHidden(0,true);
+    ui->tableViewPress->setColumnHidden(1,true);
+    ui->tableViewPress->setColumnWidth(2,75);
+    ui->tableViewPress->setColumnWidth(3,150);
+    ui->tableViewPress->setColumnWidth(4,130);
+    ui->tableViewPress->setColumnWidth(5,70);
+    ui->tableViewPress->setColumnWidth(6,70);
+    ui->tableViewPress->setColumnWidth(7,70);
+    ui->tableViewPress->setColumnWidth(8,70);
+    ui->tableViewPress->setColumnWidth(9,70);
+
+    ui->comboBoxChemDev->setModel(Rels::instance()->relChemDev->model());
+    ui->comboBoxChemDev->setModelColumn(1);
+    colVal cDev;
+    cDev.val=1;
+    ui->comboBoxChemDev->setCurrentData(cDev);
+
+    modelChem = new ModelChemSrc(this);
+    ui->tableViewChem->setModel(modelChem);
+    ui->tableViewChem->setColumnHidden(0,true);
+    ui->tableViewChem->setColumnHidden(1,true);
+    ui->tableViewChem->setColumnWidth(2,80);
+    ui->tableViewChem->setColumnWidth(3,70);
+    ui->tableViewChem->setColumnWidth(4,70);
+    ui->tableViewChem->setColumnWidth(5,110);
+
+    modelMech = new ModelMechSrc(this);
+    ui->tableViewMech->setModel(modelMech);
+    ui->tableViewMech->setColumnHidden(0,true);
+    ui->tableViewMech->setColumnWidth(1,50);
+    ui->tableViewMech->setColumnWidth(2,50);
+    ui->tableViewMech->setColumnWidth(3,180);
+    ui->tableViewMech->setColumnWidth(4,80);
+
+    modelConsStatData = new ModelConsStatData(this);
+    modelConsStatData->refresh(-1);
+    ui->tableViewGlassData->setModel(modelConsStatData);
+    ui->tableViewGlassData->setColumnHidden(0,true);
+    ui->tableViewGlassData->setColumnWidth(1,40);
+    ui->tableViewGlassData->setColumnWidth(2,70);
+    ui->tableViewGlassData->setColumnWidth(3,60);
+    ui->tableViewGlassData->setColumnWidth(4,70);
+    ui->tableViewGlassData->setColumnHidden(5,true);
+
+    modelConsStatPar = new ModelConsStatPar(this);
+    modelConsStatPar->refresh(-1,-1);
+    ui->tableViewGlassPar->setModel(modelConsStatPar);
+    ui->tableViewGlassPar->setColumnHidden(0,true);
+    ui->tableViewGlassPar->setColumnWidth(1,80);
+    ui->tableViewGlassPar->setColumnWidth(2,60);
+    ui->tableViewGlassPar->setColumnWidth(3,70);
+    ui->tableViewGlassPar->setColumnWidth(4,80);
+
+    modelPackPal = new ModelPackPal(this);
+    ui->tableViewPackPal->setModel(modelPackPal);
+
+    modelPackEl = new ModelPackEl(this);
+    ui->tableViewPack->setModel(modelPackEl);
+
+    modelThermoPack = new ModelThermoPack(this);
+    ui->tableViewThermoPack->setModel(modelThermoPack);
+
+    modelPerePackEl = new ModelPerePackEl(this);
+    ui->tableViewPerePack->setModel(modelPerePackEl);
+
+    modelStockEl = new ModelStockEl(this);
+    ui->tableViewTrans->setModel(modelStockEl);
+
+    modelSelfEl = new ModelSelfEl(this);
+    ui->tableViewSelf->setModel(modelSelfEl);
+
+    modelShipEl = new ModelShipEl(this);
+    ui->tableViewShip->setModel(modelShipEl);
+
+    modelBreakEl = new ModelBreakEl(this);
+    ui->tableViewDef->setModel(modelBreakEl);
+
+    modelPart = new ModelPart(this);
+    ui->tableViewPart->setModel(modelPart);
+    ui->tableViewPart->setColumnHidden(0,true);
+    for (int i=7; i<ui->tableViewPart->model()->columnCount(); i++){
+        ui->tableViewPart->setColumnHidden(i,true);
+    }
+    ui->tableViewPart->setColumnWidth(1,50);
+    ui->tableViewPart->setColumnWidth(2,70);
+    ui->tableViewPart->setColumnWidth(3,130);
+    ui->tableViewPart->setColumnWidth(4,40);
+    ui->tableViewPart->setColumnWidth(5,90);
+    ui->tableViewPart->setColumnWidth(6,100);
+
+    mapper = new DbMapper(ui->tableViewPart,this);
+    ui->horizontalLayoutMapper->insertWidget(0,mapper);
+
+    mapper->addMapping(ui->lineEditPart,1);
+    mapper->addMapping(ui->dateEditPart,2);
+    mapper->addMapping(ui->comboBoxMark,3);
+    mapper->addMapping(ui->lineEditDiam,4);
+    mapper->addMapping(ui->comboBoxSrc,5);
+    mapper->addMapping(ui->comboBoxVar,6);
+    mapper->addMapping(ui->lineEditPlan,7);
+    mapper->addMapping(ui->comboBoxRcp,8);
+    mapper->addMapping(ui->comboBoxWire,9);
+    mapper->addMapping(ui->lineEditpartWire,10);
+    mapper->addMapping(ui->comboBoxPack,11);
+    mapper->addMapping(ui->comboBoxLen,12);
+    mapper->addMapping(ui->plainTextEditNote,13);
+    mapper->addMapping(ui->lineEditPlot,14);
+    mapper->addMapping(ui->lineEditVyaz,15);
+    mapper->addMapping(ui->lineEditObm,16);
+    mapper->addMapping(ui->lineEditOst,17);
+    mapper->addMapping(ui->lineEditKfmp,18);
+    mapper->addMapping(ui->lineEditDl,19);
+    mapper->addMapping(ui->lineEditPokr,20);
+    mapper->addMapping(ui->lineEditFil,21);
+    mapper->addMapping(ui->lineEditDel,22);
+    mapper->addMapping(ui->lineEditMassDry,23);
+    mapper->addMapping(ui->lineEditMassGl,24);
+
+    mapper->setDefaultFocus(1);
+    mapper->addLock(ui->dateEditBeg);
+    mapper->addLock(ui->dateEditEnd);
+    mapper->addLock(ui->pushButtonUpd);
+    mapper->addLock(ui->comboBoxOnly);
+    mapper->addEmptyLock(ui->tableViewGlass);
+    mapper->addEmptyLock(ui->tableViewGlassPar);
+    mapper->addEmptyLock(ui->tableViewGlassData);
+    mapper->addEmptyLock(ui->tableViewDoz);
+    mapper->addEmptyLock(ui->tableViewDozDef);
+    mapper->addEmptyLock(ui->tableViewPress);
+    mapper->addEmptyLock(ui->tableViewChem);
+    mapper->addEmptyLock(ui->tableViewMech);
+    mapper->addEmptyLock(ui->pushButtonChem);
+    mapper->addEmptyLock(ui->pushButtonSamp);
+    mapper->addEmptyLock(ui->checkBoxOnly);
+    mapper->addEmptyLock(ui->comboBoxChemDev);
+
+    ui->comboBoxOnly->setModel(Rels::instance()->relMark->model());
+    ui->comboBoxOnly->setModelColumn(1);
+    ui->comboBoxOnly->setCurrentIndex(-1);
+
+    connect(mapper,SIGNAL(currentIndexChanged(int)),this,SLOT(refreshCont(int)));
+    connect(ui->pushButtonUpd,SIGNAL(clicked(bool)),this,SLOT(updPart()));
+    connect(ui->comboBoxOnly,SIGNAL(currentIndexChanged(int)),this,SLOT(updPart()));
+    connect(ui->checkBoxOnly,SIGNAL(clicked(bool)),this,SLOT(updPart()));
+
+    connect(ui->checkBoxOnly,SIGNAL(clicked(bool)),ui->comboBoxOnly,SLOT(setEnabled(bool)));
+
+    connect(ui->comboBoxRcp,SIGNAL(currentIndexChanged(int)),this,SLOT(insertMark()));
+    connect(ui->comboBoxMark,SIGNAL(currentIndexChanged(int)),this,SLOT(insertProvol()));
+    connect(ui->lineEditDiam,SIGNAL(editingFinished()),this,SLOT(insertPack()));
+
+    connect(ui->comboBoxChemDev,SIGNAL(currentIndexChanged(int)),this,SLOT(setCurrentChemDev()));
+    connect(ui->pushButtonChem,SIGNAL(clicked(bool)),this,SLOT(loadChem()));
+    connect(ui->pushButtonSamp,SIGNAL(clicked(bool)),this,SLOT(insertChemSamp()));
+    connect(mapper,SIGNAL(sigEdt()),this,SLOT(updRow()));
+
+    connect(ui->tableViewGlass->selectionModel(),SIGNAL(currentRowChanged(QModelIndex,QModelIndex)),this,SLOT(refreshGlassData(QModelIndex)));
+
+    updPart();*/
+}
+
+FormPart::~FormPart()
+{
+    saveSettings();
+    delete ui;
+}
+
+void FormPart::loadSettings()
+{
+    QSettings settings("szsm", QApplication::applicationName());
+    this->ui->splitter->restoreState(settings.value("part_splitter_width").toByteArray());
+    ui->tabWidget->setCurrentIndex(settings.value("part_tab_index").toInt());
+}
+
+void FormPart::saveSettings()
+{
+    QSettings settings("szsm", QApplication::applicationName());
+    settings.setValue("part_splitter_width",ui->splitter->saveState());
+    settings.setValue("part_tab_index",ui->tabWidget->currentIndex());
+}
+
+
+void FormPart::updRow()
+{
+
+}
+
+void FormPart::updPart()
+{
+    /*int id_el=-1;
+    if (ui->checkBoxOnly->isChecked()){
+        if (sender()==ui->checkBoxOnly){
+            colVal d;
+            d.val=mapper->modelData(mapper->currentIndex(),3).toInt();
+            ui->comboBoxOnly->setCurrentData(d);
+        }
+
+        id_el=ui->comboBoxOnly->getCurrentData().val.toInt();
+    }
+    if (sender()==ui->pushButtonUpd){
+        modelPart->refreshRelsModel();
+    }
+    modelPart->refresh(ui->dateEditBeg->date(),ui->dateEditEnd->date(),id_el);*/
+    QString filter=modelPart->tableName()+".dat_part between '"+ui->dateEditBeg->date().toString("yyyy-MM-dd")+"' and '"+ui->dateEditEnd->date().toString("yyyy-MM-dd")+"'";
+    modelPart->setFilter(filter);
+    modelPart->select();
+    ui->tableViewPart->resizeToContents();
+}
+
+void FormPart::refreshCont(int ind)
+{
+    qDebug()<<"refresh_cont!";
+    /*int id_part=mapper->modelData(ind,0).isNull() ? -1 : mapper->modelData(ind,0).toInt();
+    QDate dat_part=mapper->modelData(ind,2).toDate();
+    //updRow();
+
+    modelGlass->setFilter("acc_glyba.id_part = "+QString::number(id_part));
+    modelGlass->setDefaultValue(1,id_part);
+    modelGlass->select();
+    ui->tableViewGlass->setCurrentIndex(ui->tableViewGlass->model()->index(0,1));
+
+    modelZam->setFilter("parti_mix.id_part = "+QString::number(id_part));
+    modelZam->setDefaultValue(0,id_part);
+    modelZam->select();
+
+    modelZamBreak->setFilter("parti_zam_break.id_part = "+QString::number(id_part));
+    modelZamBreak->setDefaultValue(0,id_part);
+    modelZamBreak->setDefaultValue(1,dat_part);
+    modelZamBreak->select();
+
+    modelRab->setFilter("part_prod.id_part = "+QString::number(id_part));
+    modelRab->setDefaultValue(1,id_part);
+    modelRab->setDefaultValue(2,dat_part);
+    modelRab->select();
+
+    modelChem->refresh(id_part);
+    modelMech->refresh(id_part);
+
+    refreshStat(ui->groupBoxPackPal,ui->tableViewPackPal);
+    refreshStat(ui->groupBoxPack,ui->tableViewPack);
+    refreshStat(ui->groupBoxThermoPack,ui->tableViewThermoPack);
+    refreshStat(ui->groupBoxPerepack,ui->tableViewPerePack);
+    refreshStat(ui->groupBoxTrans,ui->tableViewTrans);
+    refreshStat(ui->groupBoxSelf,ui->tableViewSelf);
+    refreshStat(ui->groupBoxShip,ui->tableViewShip);
+    refreshStat(ui->groupBoxDef,ui->tableViewDef);*/
+}
+
+void FormPart::setCurrentChemDev()
+{
+    /*int id_dev = ui->comboBoxChemDev->getCurrentData().val.toInt();
+    modelChem->setDefaultValue(4,id_dev);
+    modelChem->select();*/
+}
+
+void FormPart::loadChem()
+{
+    /*DialogLoadChem d;
+    if (d.exec()==QDialog::Accepted){
+        QList <int> l = modelChem->ids();
+        foreach (int key,l){
+            QString chem=Rels::instance()->relChem->getDisplayValue(key);
+            double val=d.chemVal(chem);
+            if (val>0){
+                modelChem->addChem(key,val,2);
+            }
+        }
+    }
+    modelChem->select();
+    modelPart->refreshState();*/
+}
+
+void FormPart::insertChemSamp()
+{
+    /*QList<int> ids;
+    int id_dev=ui->comboBoxChemDev->getCurrentData().val.toInt();
+    QList <int> l = modelChem->ids();
+    foreach (int key,l){
+        int id=modelChem->addChem(key,0.0,id_dev);
+        ids.push_back(id);
+    }
+    DialogTmp dt;
+    dt.load(mapper->modelData(mapper->currentIndex(),0).toInt(),id_dev,ids);
+    dt.exec();
+    modelChem->select();
+    modelPart->refreshState();*/
+}
+
+/*void FormPart::refreshGlassData(QModelIndex index)
+{
+
+}*/
+
+void FormPart::insertMark()
+{
+
+}
+
+void FormPart::insertProvol()
+{
+
+}
+
+void FormPart::insertPack()
+{
+
+}
+

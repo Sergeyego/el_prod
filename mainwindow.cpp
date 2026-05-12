@@ -7,7 +7,11 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
-    model = new RestTableModel("test",this);
+    tabManager = new TabManager(ui->tabWidget,this);
+
+    actAction(ui->actionPart,&MainWindow::newFormPart);
+
+    /*model = new RestTableModel("test",this);
 
     //model->setPath("api/elrtr/parti");
 
@@ -30,26 +34,41 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect(ui->pushButtonRel,SIGNAL(clicked(bool)),relModel,SLOT(refresh()));
 
-    connect(model,SIGNAL(sigAboutToBeInsert()),this,SLOT(setDefaultValue()));
+    connect(model,SIGNAL(sigAboutToBeInsert()),this,SLOT(setDefaultValue()));*/
+    tabManager->loadSettings();
+    loadSettings();
 }
 
 MainWindow::~MainWindow()
 {
-    //qDebug()<<"delete!";
+    tabManager->saveSettings();
+    saveSettings();
     delete ui;
 }
 
-void MainWindow::getData()
+void MainWindow::actAction(QAction *a, void (MainWindow::*sl)())
 {
-    model->select();
-    ui->tableView->resizeToContents();
+    connect(a, &QAction::triggered, this, sl);
+    tabManager->actAction(a);
 }
 
-void MainWindow::setDefaultValue()
+void MainWindow::loadSettings()
 {
-    model->setDefaultValue("col_int","2222");
-    model->setDefaultValue("col_date",QDate::currentDate());
-    //model->setDefaultValue("col_rel",3);
-    //qDebug()<<model->columnIndex("col_date");
-    //model->refreshRow(model->rowCount()-1);
+    QSettings settings("szsm", QApplication::applicationName());
+    this->restoreState(settings.value("main_state").toByteArray());
+    this->restoreGeometry(settings.value("main_geometry").toByteArray());
+}
+
+void MainWindow::saveSettings()
+{
+    QSettings settings("szsm", QApplication::applicationName());
+    settings.setValue("main_state", this->saveState());
+    settings.setValue("main_geometry", this->saveGeometry());
+}
+
+void MainWindow::newFormPart()
+{
+    if (!tabManager->exist(sender())){
+        tabManager->addSubWindow(new FormPart(),sender());
+    }
 }

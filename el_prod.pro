@@ -7,6 +7,7 @@ CONFIG += c++17
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    formpart/formpart.cpp \
     main.cpp \
     mainwindow.cpp \
     rest/httpsyncmanager.cpp \
@@ -19,9 +20,11 @@ SOURCES += \
     rest/restmapper.cpp \
     rest/restrelmodel.cpp \
     rest/resttablemodel.cpp \
-    rest/resttableview.cpp
+    rest/resttableview.cpp \
+    tabmanager.cpp
 
 HEADERS += \
+    formpart/formpart.h \
     mainwindow.h \
     rest/httpsyncmanager.h \
     rest/relmodels.h \
@@ -33,9 +36,11 @@ HEADERS += \
     rest/restmapper.h \
     rest/restrelmodel.h \
     rest/resttablemodel.h \
-    rest/resttableview.h
+    rest/resttableview.h \
+    tabmanager.h
 
 FORMS += \
+    formpart/formpart.ui \
     mainwindow.ui \
     rest/restlogin.ui
 
