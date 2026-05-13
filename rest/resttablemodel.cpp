@@ -394,6 +394,7 @@ void RestTableModel::loadInfo()
             inf.relnam=value.toObject().value("relnam").toString();          
             inf.flags = inf.editale ? (Qt::ItemIsEditable | Qt::ItemIsSelectable | Qt::ItemIsUserCheckable | Qt::ItemIsEnabled) : (Qt::ItemIsSelectable | Qt::ItemIsUserCheckable | Qt::ItemIsEnabled);
             inf.defaultVal=nullValue(inf.udt_name);
+            inf.width = value.toObject().value("width").toVariant();
             _columns.push_back(inf.nam);
             colMap.insert(inf.nam,inf);
         }

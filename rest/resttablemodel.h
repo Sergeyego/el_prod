@@ -35,6 +35,7 @@ struct colInfo {
     QString relnam;
     Qt::ItemFlags flags;
     QVariant defaultVal;
+    QVariant width;
 };
 
 class DataEditor : public QObject

@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1128</width>
+    <width>1169</width>
     <height>856</height>
    </rect>
   </property>
@@ -88,7 +88,7 @@
          <item>
           <widget class="RestComboBox" name="comboBoxOnly">
            <property name="enabled">
-            <bool>true</bool>
+            <bool>false</bool>
            </property>
           </widget>
          </item>

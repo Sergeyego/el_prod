@@ -185,6 +185,7 @@ void RestMapper::slotNew()
 {
     RestTableModel *restModel = qobject_cast<RestTableModel *>(mapper->model());
     if (restModel) {
+        restModel->select();
         restModel->insertRow(restModel->rowCount());
         setCurrentViewRow(restModel->rowCount()-1);
         if (restModel->isAdd()) lock(true);
@@ -223,13 +224,10 @@ void RestMapper::slotWrite()
 {
     RestTableModel *restModel = qobject_cast<RestTableModel *>(mapper->model());
     if (restModel) {
-        bool ok = mapper->submit();
-        ok = restModel->submitRow();
-        if (ok) {
+        mapper->submit();
+        if (restModel->submitRow()) {
+            this->refresh();
             lock(false);
-        }
-        mapper->setCurrentIndex(mapper->currentIndex());
-        if (ok){
             emit sigWrite();
         }
     }

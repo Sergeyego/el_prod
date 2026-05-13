@@ -23,13 +23,19 @@ public:
 private:
     Ui::FormPart *ui;
     RestTableModel *modelPart;
+    RestTableModel *modelGlass;
+    RestTableModel *modelZam;
+    RestTableModel *modelZamBreak;
+    RestTableModel *modelRab;
+    RestTableModel *modelChem;
+    RestTableModel *modelMech;
     RestMapper *mapper;
 
     void loadSettings();
     void saveSettings();
 
 private slots:
-    void updRow();
+    void setDefaultValue();
     void updPart();
     void refreshCont(int ind);
     void setCurrentChemDev();

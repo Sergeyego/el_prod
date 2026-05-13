@@ -12,6 +12,36 @@ FormPart::FormPart(QWidget *parent) :
     ui->dateEditBeg->setDate(QDate(QDate::currentDate().year(),1,1));
     ui->dateEditEnd->setDate(QDate(QDate::currentDate().year(),12,31));
 
+    ui->comboBoxOnly->setModel(RelModels::instance()->getModel("mark"));
+    ui->comboBoxChemDev->setModel(RelModels::instance()->getModel("chem_dev"));
+
+    modelGlass = new RestTableModel("acc_glyba",this);
+    ui->tableViewGlass->setModel(modelGlass);
+    ui->tableViewGlass->setColumnHidden(0,true);
+    ui->tableViewGlass->setColumnHidden(1,true);
+
+    modelZam = new RestTableModel("el_parti_mix",this);
+    ui->tableViewDoz->setModel(modelZam);
+    ui->tableViewDoz->setColumnHidden(0,true);
+
+    modelZamBreak = new RestTableModel("el_zam_break",this);
+    ui->tableViewDozDef->setModel(modelZamBreak);
+    ui->tableViewDozDef->setColumnHidden(0,true);
+
+    modelRab = new RestTableModel("el_parti_prod",this);
+    ui->tableViewPress->setModel(modelRab);
+    ui->tableViewPress->setColumnHidden(0,true);
+    ui->tableViewPress->setColumnHidden(1,true);
+
+    modelChem = new RestTableModel("el_parti_chem",this);
+    ui->tableViewChem->setModel(modelChem);
+    ui->tableViewChem->setColumnHidden(0,true);
+    ui->tableViewChem->setColumnHidden(1,true);
+
+    modelMech = new RestTableModel("el_parti_mech",this);
+    ui->tableViewMech->setModel(modelMech);
+    ui->tableViewMech->setColumnHidden(0,true);
+
     modelPart = new RestTableModel("el_parti",this);
     modelPart->setPath("api/elrtr/parti");
 
@@ -64,13 +94,17 @@ FormPart::FormPart(QWidget *parent) :
     mapper->addEmptyLock(ui->tableViewMech);
     mapper->addEmptyLock(ui->pushButtonChem);
     mapper->addEmptyLock(ui->pushButtonSamp);
-    mapper->addEmptyLock(ui->checkBoxOnly);
+    mapper->addLock(ui->checkBoxOnly);
     mapper->addEmptyLock(ui->comboBoxChemDev);
 
     ui->horizontalLayoutMapper->insertWidget(0,mapper);
 
     connect(mapper,SIGNAL(currentIndexChanged(int)),this,SLOT(refreshCont(int)));
     connect(ui->pushButtonUpd,SIGNAL(clicked(bool)),this,SLOT(updPart()));
+    connect(modelPart,SIGNAL(sigAboutToBeInsert()),this,SLOT(setDefaultValue()));
+    connect(ui->comboBoxOnly,SIGNAL(currentIndexChanged(int)),this,SLOT(updPart()));
+    connect(ui->checkBoxOnly,SIGNAL(clicked(bool)),this,SLOT(updPart()));
+    connect(ui->checkBoxOnly,SIGNAL(clicked(bool)),ui->comboBoxOnly,SLOT(setEnabled(bool)));
 
     updPart();
 
@@ -304,64 +338,81 @@ void FormPart::saveSettings()
     settings.setValue("part_tab_index",ui->tabWidget->currentIndex());
 }
 
-
-void FormPart::updRow()
+void FormPart::setDefaultValue()
 {
-
+    int old_num=0;
+    if (modelPart->rowCount()) {
+        old_num=mapper->modelData(modelPart->rowCount()-1,"n_s").toInt();
+    }
+    QString num = QString::number(old_num+1);
+    num=num.rightJustified(4,'0',true);
+    modelPart->setDefaultValue("n_s",num);
+    modelPart->setDefaultValue("dat_part",QDate::currentDate());
 }
+
 
 void FormPart::updPart()
 {
-    /*int id_el=-1;
+    if (sender()==ui->comboBoxOnly && !ui->checkBoxOnly->isChecked()){
+        return;
+    }
+    int id_el=-1;
     if (ui->checkBoxOnly->isChecked()){
         if (sender()==ui->checkBoxOnly){
             colVal d;
-            d.val=mapper->modelData(mapper->currentIndex(),3).toInt();
+            d.val=mapper->modelData(mapper->currentIndex(),"id_el").toInt();
             ui->comboBoxOnly->setCurrentData(d);
         }
-
         id_el=ui->comboBoxOnly->getCurrentData().val.toInt();
     }
-    if (sender()==ui->pushButtonUpd){
+    /*if (sender()==ui->pushButtonUpd){
         modelPart->refreshRelsModel();
-    }
-    modelPart->refresh(ui->dateEditBeg->date(),ui->dateEditEnd->date(),id_el);*/
+    }*/
     QString filter=modelPart->tableName()+".dat_part between '"+ui->dateEditBeg->date().toString("yyyy-MM-dd")+"' and '"+ui->dateEditEnd->date().toString("yyyy-MM-dd")+"'";
+    if (id_el>0){
+        filter+=" and "+modelPart->tableName()+".id_el="+QString::number(id_el);
+    }
     modelPart->setFilter(filter);
     modelPart->select();
     ui->tableViewPart->resizeToContents();
+    qDebug()<<"upd!"<<sender();
 }
 
 void FormPart::refreshCont(int ind)
 {
     qDebug()<<"refresh_cont!";
-    /*int id_part=mapper->modelData(ind,0).isNull() ? -1 : mapper->modelData(ind,0).toInt();
-    QDate dat_part=mapper->modelData(ind,2).toDate();
+    int id_part=mapper->modelData(ind,"id").isNull() ? -1 : mapper->modelData(ind,"id").toInt();
+    QDate dat_part=mapper->modelData(ind,"dat_part").toDate();
     //updRow();
 
-    modelGlass->setFilter("acc_glyba.id_part = "+QString::number(id_part));
-    modelGlass->setDefaultValue(1,id_part);
+    modelGlass->setFilter(modelGlass->tableName()+".id_part = "+QString::number(id_part));
+    modelGlass->setDefaultValue("id_part",id_part);
     modelGlass->select();
-    ui->tableViewGlass->setCurrentIndex(ui->tableViewGlass->model()->index(0,1));
+    ui->tableViewGlass->setCurrentIndex(ui->tableViewGlass->model()->index(0,2));
 
-    modelZam->setFilter("parti_mix.id_part = "+QString::number(id_part));
-    modelZam->setDefaultValue(0,id_part);
+    modelZam->setFilter(modelZam->tableName()+".id_part = "+QString::number(id_part));
+    modelZam->setDefaultValue("id_part",id_part);
     modelZam->select();
 
-    modelZamBreak->setFilter("parti_zam_break.id_part = "+QString::number(id_part));
-    modelZamBreak->setDefaultValue(0,id_part);
-    modelZamBreak->setDefaultValue(1,dat_part);
+    modelZamBreak->setFilter(modelZamBreak->tableName()+".id_part = "+QString::number(id_part));
+    modelZamBreak->setDefaultValue("id_part",id_part);
+    modelZamBreak->setDefaultValue("dat_part",dat_part);
     modelZamBreak->select();
 
-    modelRab->setFilter("part_prod.id_part = "+QString::number(id_part));
-    modelRab->setDefaultValue(1,id_part);
-    modelRab->setDefaultValue(2,dat_part);
+    modelRab->setFilter(modelRab->tableName()+".id_part = "+QString::number(id_part));
+    modelRab->setDefaultValue("id_part",id_part);
+    modelRab->setDefaultValue("dat",dat_part);
     modelRab->select();
 
-    modelChem->refresh(id_part);
-    modelMech->refresh(id_part);
+    modelChem->setFilter(modelChem->tableName()+".id_part = "+QString::number(id_part));
+    modelChem->setDefaultValue("id_part",id_part);
+    modelChem->select();
 
-    refreshStat(ui->groupBoxPackPal,ui->tableViewPackPal);
+    modelMech->setFilter(modelMech->tableName()+".id_part = "+QString::number(id_part));
+    modelMech->setDefaultValue("id_part",id_part);
+    modelMech->select();
+
+    /*refreshStat(ui->groupBoxPackPal,ui->tableViewPackPal);
     refreshStat(ui->groupBoxPack,ui->tableViewPack);
     refreshStat(ui->groupBoxThermoPack,ui->tableViewThermoPack);
     refreshStat(ui->groupBoxPerepack,ui->tableViewPerePack);
@@ -430,4 +481,3 @@ void FormPart::insertPack()
 {
 
 }
-
