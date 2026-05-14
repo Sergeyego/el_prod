@@ -22,6 +22,17 @@ void RestTableView::setModel(QAbstractItemModel *model)
     QTableView::setModel(model);
     RestTableModel *restModel = qobject_cast<RestTableModel *>(this->model());
     if (restModel){
+        for (int i=0; i<restModel->columnCount(); i++){
+            QVariant width = restModel->columnInfo(i).width;
+            //qDebug()<<width;
+            if (!width.isNull()){
+                if (width.toInt()>0){
+                    this->setColumnWidth(i,width.toInt());
+                } else {
+                    this->setColumnHidden(i,true);
+                }
+            }
+        }
         connect(this->selectionModel(),SIGNAL(currentRowChanged(QModelIndex,QModelIndex)),this,SLOT(submit(QModelIndex,QModelIndex)));
         setMenuEnabled(true);
     }
