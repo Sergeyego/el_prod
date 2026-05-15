@@ -8,6 +8,7 @@ CONFIG += c++17
 
 SOURCES += \
     formpart/formpart.cpp \
+    formreport/formreport.cpp \
     main.cpp \
     mainwindow.cpp \
     rest/httpsyncmanager.cpp \
@@ -25,6 +26,7 @@ SOURCES += \
 
 HEADERS += \
     formpart/formpart.h \
+    formreport/formreport.h \
     mainwindow.h \
     rest/httpsyncmanager.h \
     rest/relmodels.h \
@@ -41,6 +43,7 @@ HEADERS += \
 
 FORMS += \
     formpart/formpart.ui \
+    formreport/formreport.ui \
     mainwindow.ui \
     rest/restlogin.ui
 

@@ -7,6 +7,7 @@
 #include <QSettings>
 #include "rest/resttablemodel.h"
 #include "rest/restmapper.h"
+#include <QElapsedTimer>
 
 namespace Ui {
 class FormPart;

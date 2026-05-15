@@ -8,7 +8,8 @@
 #include "rest/restrelmodel.h"
 #include "rest/relmodels.h"
 #include "tabmanager.h"
-#include"formpart/formpart.h"
+#include "formpart/formpart.h"
+#include "formreport/formreport.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -33,5 +34,6 @@ private:
 
 private slots:
     void newFormPart();
+    void newFormReport();
 };
 #endif // MAINWINDOW_H

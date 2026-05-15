@@ -39,12 +39,36 @@
     </property>
     <addaction name="actionPart"/>
    </widget>
+   <widget class="QMenu" name="menu_2">
+    <property name="title">
+     <string>Операции</string>
+    </property>
+    <addaction name="action"/>
+   </widget>
+   <widget class="QMenu" name="menu_3">
+    <property name="title">
+     <string>Отчеты</string>
+    </property>
+    <addaction name="actionReport"/>
+   </widget>
    <addaction name="menu"/>
+   <addaction name="menu_2"/>
+   <addaction name="menu_3"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionPart">
    <property name="text">
     <string>Партии</string>
+   </property>
+  </action>
+  <action name="actionReport">
+   <property name="text">
+    <string>Отчет за период</string>
+   </property>
+  </action>
+  <action name="action">
+   <property name="text">
+    <string>Упаковка</string>
    </property>
   </action>
  </widget>
