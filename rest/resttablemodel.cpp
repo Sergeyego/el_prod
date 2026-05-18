@@ -210,7 +210,7 @@ void RestTableModel::setColumns(const QStringList &cols)
     endResetModel();
 }
 
-QVariant RestTableModel::nullValue(const QString &udt_name) const
+QVariant RestTableModel::nullValue(const QString &udt_name)
 {
 #if (QT_VERSION < QT_VERSION_CHECK(6, 0, 0))
     QVariant::Type type = (QVariant::Type) getMetaType(udt_name);
@@ -479,7 +479,7 @@ QVector<cellData> RestTableModel::defaultRow() const
     return tmpRow;
 }
 
-QMetaType::Type RestTableModel::getMetaType(const QString &udt_name) const
+QMetaType::Type RestTableModel::getMetaType(const QString &udt_name)
 {
     QStringList boolList = {"bool"};
     QStringList longList = {"int8"};
@@ -513,7 +513,7 @@ QMetaType::Type RestTableModel::getMetaType(const QString &udt_name) const
     return type;
 }
 
-QVariant RestTableModel::loadEdtVal(const QJsonValue &val, const QString &udt_name) const
+QVariant RestTableModel::loadEdtVal(const QJsonValue &val, const QString &udt_name)
 {
     QMetaType::Type type=getMetaType(udt_name);
     if (val.isNull()){

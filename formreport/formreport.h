@@ -2,8 +2,7 @@
 #define FORMREPORT_H
 
 #include <QWidget>
-//#include "db/tablemodel.h"
-//#include "progressexecutor.h"
+#include "rest/restrotablemodel.h"
 
 namespace Ui {
 class FormReport;
@@ -28,7 +27,7 @@ public:
 
 private:
     Ui::FormReport *ui;
-    //ModelReport *model;
+    RestRoTableModel *model;
     //ProgressExecutor *executor;
 
 private slots:

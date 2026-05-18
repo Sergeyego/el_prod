@@ -1,0 +1,160 @@
+#include "restrotablemodel.h"
+
+RestRoTableModel::RestRoTableModel(QObject *parent) : QAbstractTableModel{parent}
+{
+    manager = new QNetworkAccessManager(this);
+    connect(manager,SIGNAL(finished(QNetworkReply*)),this,SLOT(onResult(QNetworkReply*)));
+}
+
+QVariant RestRoTableModel::data(const QModelIndex &index, int role) const
+{
+    if (!index.isValid()){
+        return QVariant();
+    }
+    QVariant value;
+    cellData cell = modelData[index.row()][index.column()];
+    switch(role)
+    {
+    case Qt::EditRole:
+    {
+        value=cell.edit;
+        break;
+    }
+    case Qt::DisplayRole:
+    {
+        value=cell.display;
+        break;
+    }
+    case Qt::BackgroundRole:
+    {
+        value=cell.background;
+        break;
+    }
+    case Qt::ToolTipRole:
+    {
+        value=cell.tooltip;
+        break;
+    }
+    case Qt::TextAlignmentRole:
+    {
+        QMetaType::Type colType = columnType(index.column());
+        value=(colType==QMetaType::Int || colType==QMetaType::Double || colType==QMetaType::LongLong)? int(Qt::AlignRight | Qt::AlignVCenter) : int(Qt::AlignLeft | Qt::AlignVCenter);
+        break;
+    }
+    case Qt::CheckStateRole:
+    {
+        if (columnInfo(index.column()).checkable){
+            value = cell.edit.toBool() ? Qt::Checked : Qt::Unchecked;
+        } else {
+            value = QVariant();
+        }
+        break;
+    }
+    default:
+        value=QVariant();
+        break;
+    }
+    return value;
+}
+
+int RestRoTableModel::rowCount(const QModelIndex &/*parent*/) const
+{
+    return modelData.size();
+}
+
+int RestRoTableModel::columnCount(const QModelIndex &/*parent*/) const
+{
+    return _columns.size();
+}
+
+QVariant RestRoTableModel::headerData(int section, Qt::Orientation orientation, int role) const
+{
+    if (orientation==Qt::Horizontal && role==Qt::DisplayRole && section>=0 && section<columnCount()){
+        return colMap.value(_columns.at(section)).snam;
+    }
+    if (orientation == Qt::Vertical && role == Qt::DisplayRole) {
+        return QString::number(section);
+    }
+    return QAbstractTableModel::headerData(section,orientation,role);
+}
+
+colInfo RestRoTableModel::columnInfo(int col) const
+{
+    return (col>=0 && col<columnCount()) ? colMap.value(_columns.at(col)) : colInfo();
+}
+
+QMetaType::Type RestRoTableModel::columnType(int col) const
+{
+    return RestTableModel::getMetaType(colMap.value(_columns.at(col)).udt_name);
+}
+
+void RestRoTableModel::setPath(QString p)
+{
+    _path=p;
+}
+
+void RestRoTableModel::setModelData(const QJsonObject &data)
+{
+    beginResetModel();
+    _columns.clear();
+    colMap.clear();
+    _title=data.value("title").toString();
+    const QJsonArray fields = data.value("fields").toArray();
+    for (const QJsonValue &value : fields) {
+        colInfo inf;
+        inf.nam=value.toObject().value("nam").toString();
+        inf.col=value.toObject().value("nam").toString();
+        inf.snam=value.toObject().value("snam").toString();
+        inf.udt_name=value.toObject().value("udt_name").toString();
+        inf.is_pk=false;
+        inf.editale=false;
+        inf.checkable=false;
+        inf.dec=value.toObject().value("dec").toInt();
+        inf.relnam="";
+        inf.flags=(Qt::ItemIsSelectable | Qt::ItemIsUserCheckable | Qt::ItemIsEnabled);
+        inf.defaultVal=QVariant();
+        inf.width=QVariant();
+        _columns.push_back(inf.nam);
+        colMap.insert(inf.nam,inf);
+    }
+    modelData.clear();
+    const QJsonArray rows=data.value("rows").toArray();
+    for (const QJsonValue &val : rows) {
+        QVector<cellData> row;
+        for (const QString &col_nam : _columns){
+            colInfo col = colMap.value(col_nam);
+            QJsonObject obj = val.toObject().value(col.nam).toObject();
+            cellData cell;
+            cell.display=obj.value("display_role").toString();
+            cell.edit=RestTableModel::loadEdtVal(obj.value("edit_role"),col.udt_name);
+            cell.background=QColor(obj.value("background_role").toString());
+            cell.tooltip=obj.value("tooltip_role").toString();
+            row.push_back(cell);
+        }
+        modelData.push_back(row);
+    }
+    endResetModel();
+    emit sigRefresh();
+}
+
+void RestRoTableModel::select()
+{
+    QUrl url = QUrl(RestConnection::instance()->getUrl()+"/"+_path);
+    QNetworkRequest request(url);
+    request.setRawHeader("Accept-Charset", "UTF-8");
+    request.setRawHeader("User-Agent", "Appszsm");
+    request.setRawHeader("Authorization", "Bearer "+RestConnection::instance()->getToken().toUtf8());
+    QNetworkReply *reply = manager->get(request);
+    reply->ignoreSslErrors();
+}
+
+void RestRoTableModel::onResult(QNetworkReply *reply)
+{
+    if (reply->error()){
+        QMessageBox::critical(nullptr,tr("Ошибка"),reply->errorString()+"\n"+reply->readAll(),QMessageBox::Cancel);
+    } else {
+        QJsonDocument doc = QJsonDocument::fromJson(reply->readAll());
+        setModelData(doc.object());
+    }
+    reply->deleteLater();
+}

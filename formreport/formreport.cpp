@@ -12,9 +12,9 @@ FormReport::FormReport(QWidget *parent) :
 
     //executor = new ProgressExecutor(this);
 
-    //model = new ModelReport(this);
+    model = new RestRoTableModel(this);
 
-    //ui->tableView->setModel(model);
+    ui->tableView->setModel(model);
 
     //connect(executor,SIGNAL(finished()), this, SLOT(updFinished()));
     connect(ui->pushButtonUpd,SIGNAL(clicked(bool)),this,SLOT(upd()));
@@ -28,6 +28,8 @@ FormReport::~FormReport()
 
 void FormReport::upd()
 {
+    model->setPath("api/elrtr/report");
+    model->select();
     /*QString query;
     if (ui->radioButtonPart->isChecked()){
         query=QString("select e.marka, p.diam, p.n_s||'-'||date_part('year',p.dat_part) as part, ev.nam, ep.pack_ed, "

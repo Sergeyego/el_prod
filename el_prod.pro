@@ -20,6 +20,7 @@ SOURCES += \
     rest/restlogin.cpp \
     rest/restmapper.cpp \
     rest/restrelmodel.cpp \
+    rest/restrotablemodel.cpp \
     rest/resttablemodel.cpp \
     rest/resttableview.cpp \
     tabmanager.cpp
@@ -37,6 +38,7 @@ HEADERS += \
     rest/restlogin.h \
     rest/restmapper.h \
     rest/restrelmodel.h \
+    rest/restrotablemodel.h \
     rest/resttablemodel.h \
     rest/resttableview.h \
     tabmanager.h

@@ -79,7 +79,7 @@ public:
     void setDefaultValue(QString column, QVariant value);
     void setColumnFlags(QString column, Qt::ItemFlags flags);
     void setColumns(const QStringList &cols);
-    QVariant nullValue(const QString &udt_name) const;
+    static QVariant nullValue(const QString &udt_name);
     QVariant nullValue(int column) const;
     QVariant defaultValue(int column) const;
     QVariant headerData(int section, Qt::Orientation orientation, int role) const;
@@ -94,10 +94,14 @@ public:
     bool isInsertable() const;
     int currentEdtRow() const;
     int columnIndex(QString nam) const;
+    static QMetaType::Type getMetaType(const QString &udt_name);
+    static QVariant loadEdtVal(const QJsonValue &val, const QString &udt_name);
+
 public slots:
     virtual void select();
     virtual void revert();
     virtual bool submitRow();
+
 private:
     DataEditor *editor;
     QVector<QVector<cellData>> modelData;
@@ -113,10 +117,10 @@ private:
     bool apiInsert();
     bool apiUpdate();
     bool apiDelete(int row);
+
     QVector<cellData> loadRow(const QJsonValue &val) const;
     QVector<cellData> defaultRow() const;
-    QMetaType::Type getMetaType(const QString &udt_name) const;
-    QVariant loadEdtVal(const QJsonValue &val, const QString &udt_name) const;
+
     QString formatVal(const QVariant &val, int column) const;
     QJsonValue getJsonValue(const QVariant &val);
     QJsonObject getRowObject(const QVector<cellData> &row);
