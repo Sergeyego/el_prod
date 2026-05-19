@@ -7,6 +7,7 @@
 #include <QMenu>
 #include "rest/resttablemodel.h"
 #include "rest/restitemdelegate.h"
+#include "rest/restrotablemodel.h"
 
 class RestTableView : public QTableView
 {
@@ -25,6 +26,8 @@ private:
     bool menuEnabled;
     bool writeOk;
     int getSpace(int column);
+    RestTableModel *restModel;
+    RestRoTableModel *restRoModel;
 
 public slots:
     void resizeToContents();

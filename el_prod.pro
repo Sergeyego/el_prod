@@ -11,6 +11,7 @@ SOURCES += \
     formreport/formreport.cpp \
     main.cpp \
     mainwindow.cpp \
+    progressreportdialog/progressreportdialog.cpp \
     rest/httpsyncmanager.cpp \
     rest/relmodels.cpp \
     rest/restcombobox.cpp \
@@ -29,6 +30,7 @@ HEADERS += \
     formpart/formpart.h \
     formreport/formreport.h \
     mainwindow.h \
+    progressreportdialog/progressreportdialog.h \
     rest/httpsyncmanager.h \
     rest/relmodels.h \
     rest/restcombobox.h \
@@ -47,6 +49,7 @@ FORMS += \
     formpart/formpart.ui \
     formreport/formreport.ui \
     mainwindow.ui \
+    progressreportdialog/progressreportdialog.ui \
     rest/restlogin.ui
 
 # Default rules for deployment.

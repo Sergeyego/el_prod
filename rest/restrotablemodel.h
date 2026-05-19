@@ -35,6 +35,7 @@ private:
 
 signals :
     void sigRefresh();
+    void sigStartRefresh();
 };
 
 #endif // RESTROTABLEMODEL_H

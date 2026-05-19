@@ -3,24 +3,15 @@
 
 #include <QWidget>
 #include "rest/restrotablemodel.h"
+#include "progressreportdialog/progressreportdialog.h"
 
 namespace Ui {
 class FormReport;
 }
 
-/*class ModelReport : public TableModel
-{
-    Q_OBJECT
-
-public:
-    explicit ModelReport(QWidget *parent = nullptr);
-    QVariant data(const QModelIndex &index, int role) const;
-};*/
-
 class FormReport : public QWidget
 {
     Q_OBJECT
-
 public:
     explicit FormReport(QWidget *parent = nullptr);
     ~FormReport();
@@ -28,13 +19,11 @@ public:
 private:
     Ui::FormReport *ui;
     RestRoTableModel *model;
-    //ProgressExecutor *executor;
+    ProgressReportDialog *progressDialog;
 
 private slots:
-    void upd();
-    void updFinished();
+    void updPath();
     void save();
-
 };
 
 #endif // FORMREPORT_H

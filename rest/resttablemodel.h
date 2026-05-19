@@ -102,7 +102,11 @@ public slots:
     virtual void revert();
     virtual bool submitRow();
 
+private slots:
+    void onResult(QNetworkReply *reply);
+
 private:
+    QNetworkAccessManager *manager;
     DataEditor *editor;
     QVector<QVector<cellData>> modelData;
     QMap<QString,colInfo> colMap;

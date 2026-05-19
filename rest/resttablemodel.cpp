@@ -2,10 +2,12 @@
 
 RestTableModel::RestTableModel(QString name, QObject *parent) : QAbstractTableModel(parent), _rname(name)
 {
+    manager = new QNetworkAccessManager(this);
     _path = "api/autorest/tables/"+_rname;
     block=false;
     insertable=true;
     editor = new DataEditor(&modelData,this);
+    connect(manager,SIGNAL(finished(QNetworkReply*)),this,SLOT(onResult(QNetworkReply*)));
     loadInfo();
 }
 
@@ -309,16 +311,35 @@ int RestTableModel::columnIndex(QString nam) const
 
 void RestTableModel::select()
 {
-    QByteArray data;
+    QUrl url = QUrl(RestConnection::instance()->getUrl()+"/"+_path);
     QUrlQuery query;
     query.addQueryItem("filter",_filter);
-    bool ok = HttpSyncManager::sendGet(_path+"?"+query.toString(),data);
-    if (ok) {
+    url.setQuery(query);
+    QNetworkRequest request(url);
+    request.setRawHeader("Accept-Charset", "UTF-8");
+    request.setRawHeader("User-Agent", "Appszsm");
+    request.setRawHeader("Authorization", "Bearer "+RestConnection::instance()->getToken().toUtf8());
+    QNetworkReply *reply = manager->get(request);
+    reply->ignoreSslErrors();
+}
+
+
+void RestTableModel::onResult(QNetworkReply *reply)
+{
+    if (reply->error()){
         beginResetModel();
         editor->revert();
         modelData.clear();
-        QJsonDocument doc = QJsonDocument::fromJson(data);
+        editor->add(0,defaultRow());
+        endResetModel();
+        QMessageBox::critical(nullptr,tr("Ошибка"),reply->errorString()+"\n"+reply->readAll(),QMessageBox::Cancel);
+    } else {
+        QJsonDocument doc = QJsonDocument::fromJson(reply->readAll());
         const QJsonArray rows=doc.array();
+        QSignalBlocker b(manager);
+        beginResetModel();
+        editor->revert();
+        modelData.clear();
         for (const QJsonValue &value : rows) {
             modelData.push_back(loadRow(value));
         }
@@ -326,9 +347,11 @@ void RestTableModel::select()
             editor->add(0,defaultRow());
         }
         endResetModel();
-        emit sigRefresh();
     }
+    emit sigRefresh();
+    reply->deleteLater();
 }
+
 
 void RestTableModel::revert()
 {

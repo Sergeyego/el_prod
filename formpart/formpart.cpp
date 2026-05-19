@@ -211,12 +211,12 @@ void FormPart::updPart()
     }
     modelPart->setFilter(filter);
     modelPart->select();
-    qDebug()<<"upd!"<<sender();
+    //qDebug()<<"upd!"<<sender();
 }
 
 void FormPart::refreshCont(int ind)
 {
-    qDebug()<<"refresh_cont!";
+    //qDebug()<<"refresh_cont!";
     int id_part=mapper->modelData(ind,"id").isNull() ? -1 : mapper->modelData(ind,"id").toInt();
     QDate dat_part=mapper->modelData(ind,"dat_part").toDate();
     //updRow();
@@ -224,7 +224,7 @@ void FormPart::refreshCont(int ind)
     modelGlass->setFilter(modelGlass->tableName()+".id_part = "+QString::number(id_part));
     modelGlass->setDefaultValue("id_part",id_part);
     modelGlass->select();
-    ui->tableViewGlass->setCurrentIndex(ui->tableViewGlass->model()->index(0,2));
+    //ui->tableViewGlass->setCurrentIndex(ui->tableViewGlass->model()->index(0,2));
 
     modelZam->setFilter(modelZam->tableName()+".id_part = "+QString::number(id_part));
     modelZam->setDefaultValue("id_part",id_part);

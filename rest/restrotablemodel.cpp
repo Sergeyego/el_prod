@@ -73,7 +73,7 @@ QVariant RestRoTableModel::headerData(int section, Qt::Orientation orientation, 
         return colMap.value(_columns.at(section)).snam;
     }
     if (orientation == Qt::Vertical && role == Qt::DisplayRole) {
-        return QString::number(section);
+        return QString::number(section+1);
     }
     return QAbstractTableModel::headerData(section,orientation,role);
 }
@@ -139,6 +139,9 @@ void RestRoTableModel::setModelData(const QJsonObject &data)
 
 void RestRoTableModel::select()
 {
+    if (_path.isEmpty()){
+        return;
+    }
     QUrl url = QUrl(RestConnection::instance()->getUrl()+"/"+_path);
     QNetworkRequest request(url);
     request.setRawHeader("Accept-Charset", "UTF-8");
@@ -146,6 +149,7 @@ void RestRoTableModel::select()
     request.setRawHeader("Authorization", "Bearer "+RestConnection::instance()->getToken().toUtf8());
     QNetworkReply *reply = manager->get(request);
     reply->ignoreSslErrors();
+    emit sigStartRefresh();
 }
 
 void RestRoTableModel::onResult(QNetworkReply *reply)
