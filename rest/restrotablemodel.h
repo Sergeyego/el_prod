@@ -18,6 +18,7 @@ public:
     QMetaType::Type columnType(int col) const;
     void setPath(QString p);
     void setModelData(const QJsonObject &data);
+    QString title() const;
 
 public slots:
     void select();

@@ -137,6 +137,12 @@ void RestRoTableModel::setModelData(const QJsonObject &data)
     emit sigRefresh();
 }
 
+QString RestRoTableModel::title() const
+{
+    return _title;
+}
+
+
 void RestRoTableModel::select()
 {
     if (_path.isEmpty()){

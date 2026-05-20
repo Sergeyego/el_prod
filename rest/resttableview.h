@@ -8,6 +8,9 @@
 #include "rest/resttablemodel.h"
 #include "rest/restitemdelegate.h"
 #include "rest/restrotablemodel.h"
+#include <QDir>
+#include <QDesktopServices>
+
 
 class RestTableView : public QTableView
 {
@@ -23,6 +26,7 @@ protected:
 private:
     QAction *updAct;
     QAction *removeAct;
+    QAction *xlsxAct;
     bool menuEnabled;
     bool writeOk;
     int getSpace(int column);
@@ -32,6 +36,7 @@ private:
 public slots:
     void resizeToContents();
     void setMenuEnabled(bool value);
+    void saveXlsx();
 
 private slots:
     void upd();

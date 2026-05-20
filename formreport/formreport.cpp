@@ -47,4 +47,5 @@ void FormReport::save()
 {
     //QString tit=tr("Отчет цеха электродов с ")+ui->dateEditBeg->date().toString("dd.MM.yyyy")+tr(" по ")+ui->dateEditEnd->date().toString("dd.MM.yyyy")+".xlsx";
     //ui->tableView->save(tit,2,true,Qt::LandscapeOrientation);
+    ui->tableView->saveXlsx();
 }

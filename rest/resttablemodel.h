@@ -96,6 +96,7 @@ public:
     int columnIndex(QString nam) const;
     static QMetaType::Type getMetaType(const QString &udt_name);
     static QVariant loadEdtVal(const QJsonValue &val, const QString &udt_name);
+    static QJsonValue getJsonValue(const QVariant &val);
 
 public slots:
     virtual void select();
@@ -126,7 +127,6 @@ private:
     QVector<cellData> defaultRow() const;
 
     QString formatVal(const QVariant &val, int column) const;
-    QJsonValue getJsonValue(const QVariant &val);
     QJsonObject getRowObject(const QVector<cellData> &row);
 
 signals:

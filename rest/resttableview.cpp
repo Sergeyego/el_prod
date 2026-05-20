@@ -11,9 +11,11 @@ RestTableView::RestTableView(QWidget *parent) : QTableView(parent)
     verticalHeader()->setSectionResizeMode(QHeaderView::Fixed);
     updAct = new QAction(QString::fromUtf8("Обновить"),this);
     removeAct = new QAction(QString::fromUtf8("Удалить"),this);
+    xlsxAct = new QAction(QString::fromUtf8("Сохранить в файл"),this);
 
     connect(updAct,SIGNAL(triggered(bool)),this,SLOT(upd()));
     connect(removeAct,SIGNAL(triggered(bool)),this,SLOT(remove()));
+    connect(xlsxAct,SIGNAL(triggered(bool)),this,SLOT(saveXlsx()));
 }
 
 void RestTableView::setModel(QAbstractItemModel *model)
@@ -115,6 +117,9 @@ void RestTableView::contextMenuEvent(QContextMenuEvent *event)
     if (menuEnabled){
         QMenu menu(this);
         menu.addAction(updAct);
+        if (restModel || restRoModel){
+            menu.addAction(xlsxAct);
+        }
         menu.addSeparator();
         if (restModel && this->selectionModel()){
             if (this->indexAt(event->pos()).isValid() && this->editTriggers()!=QAbstractItemView::NoEditTriggers){
@@ -184,6 +189,53 @@ void RestTableView::resizeToContents()
 void RestTableView::setMenuEnabled(bool value)
 {
     menuEnabled=value;
+}
+
+void RestTableView::saveXlsx()
+{
+    if (restRoModel){
+        QJsonDocument doc;
+        QJsonArray arrRow;
+        QJsonArray arrColumn;
+        for (int j=0; j<restRoModel->columnCount(); j++){
+            QJsonObject colObj;
+            colInfo inf = restRoModel->columnInfo(j);
+            colObj.insert("key",inf.nam);
+            colObj.insert("header",inf.snam);
+            colObj.insert("id_type",RestTableModel::getMetaType(inf.udt_name));
+            colObj.insert("dec",inf.dec);
+            colObj.insert("width",this->columnWidth(j));
+            arrColumn.push_back(QJsonValue(colObj));
+        }
+        for (int i=0; i<restRoModel->rowCount(); i++){
+            QJsonObject rowObj;
+            for (int j=0; j<restRoModel->columnCount(); j++){
+                colInfo inf = restRoModel->columnInfo(j);
+                QVariant data=restRoModel->data(restRoModel->index(i,j),Qt::EditRole);
+                rowObj.insert(inf.nam,RestTableModel::getJsonValue(data));
+            }
+            arrRow.push_back(QJsonValue(rowObj));
+        }
+        QJsonObject obj;
+        obj.insert("title",restRoModel->title());
+        obj.insert("header_height",this->horizontalHeader()->height());
+        obj.insert("columns",arrColumn);
+        obj.insert("rows",arrRow);
+        doc.setObject(obj);
+        QByteArray data;
+        bool ok = HttpSyncManager::sendRequest("api/xlsx/create","POST",doc.toJson(),data,"application/json");
+        if (ok) {
+            QString totalName=QDir::homePath()+"/xlsx/test.xlsx";
+            QFile file(totalName);
+            if (file.open(QIODevice::WriteOnly)){
+                file.write(data);
+                file.close();
+                QFileInfo fileInfo(file);
+                QDesktopServices::openUrl((QUrl(QUrl::fromLocalFile(fileInfo.absoluteFilePath()))));
+            }
+        }
+        //qDebug()<<arrColumn;
+    }
 }
 
 void RestTableView::upd()
