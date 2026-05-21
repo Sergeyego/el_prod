@@ -23,7 +23,6 @@ private:
 
 private slots:
     void updPath();
-    void save();
 };
 
 #endif // FORMREPORT_H

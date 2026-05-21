@@ -193,31 +193,61 @@ void RestTableView::setMenuEnabled(bool value)
 
 void RestTableView::saveXlsx()
 {
-    if (restRoModel){
+    if (this->model() && this->model()->rowCount()){
         QJsonDocument doc;
         QJsonArray arrRow;
         QJsonArray arrColumn;
-        for (int j=0; j<restRoModel->columnCount(); j++){
-            QJsonObject colObj;
-            colInfo inf = restRoModel->columnInfo(j);
-            colObj.insert("key",inf.nam);
-            colObj.insert("header",inf.snam);
-            colObj.insert("id_type",RestTableModel::getMetaType(inf.udt_name));
-            colObj.insert("dec",inf.dec);
-            colObj.insert("width",this->columnWidth(j));
-            arrColumn.push_back(QJsonValue(colObj));
+        QStringList keys;
+        for (int j=0; j<this->model()->columnCount(); j++){
+            xlsxCol inf;
+            inf.width=this->columnWidth(j);
+            if (restModel || restRoModel){
+                colInfo c = restModel ? restModel->columnInfo(j) : restRoModel->columnInfo(j);
+                inf.key = c.nam;
+                inf.header = c.snam;
+                inf.id_type = c.relnam.isEmpty()? RestTableModel::getMetaType(c.udt_name) : QMetaType::QString;
+                inf.dec = c.dec;
+            } else {
+                inf.dec=0;
+                inf.key="col-"+QString::number(j);
+                inf.header=this->model()->headerData(j,Qt::Horizontal,Qt::DisplayRole).toString();
+                QVariant data=this->model()->data(this->model()->index(0,j),Qt::EditRole);
+#if (QT_VERSION < QT_VERSION_CHECK(6, 0, 0))
+                inf.id_type=data.type();
+#else
+                inf.id_type=data.typeId();
+#endif
+            }
+            keys.push_back(inf.key);
+
+            if (!this->isColumnHidden(j)){
+                QJsonObject colObj;
+                colObj.insert("key",inf.key);
+                colObj.insert("header",inf.header);
+                colObj.insert("id_type",inf.id_type);
+                colObj.insert("dec",inf.dec);
+                colObj.insert("width",inf.width);
+                arrColumn.push_back(QJsonValue(colObj));
+            }
         }
-        for (int i=0; i<restRoModel->rowCount(); i++){
+
+        for (int i=0; i<this->model()->rowCount(); i++){
             QJsonObject rowObj;
-            for (int j=0; j<restRoModel->columnCount(); j++){
-                colInfo inf = restRoModel->columnInfo(j);
-                QVariant data=restRoModel->data(restRoModel->index(i,j),Qt::EditRole);
-                rowObj.insert(inf.nam,RestTableModel::getJsonValue(data));
+            for (int j=0; j<this->model()->columnCount(); j++){
+                if (!this->isColumnHidden(j)){
+                    int role = (restModel && restModel->isColumnRel(j)) ? Qt::DisplayRole : Qt::EditRole;
+                    QVariant data=this->model()->data(this->model()->index(i,j),role);
+                    rowObj.insert(keys.at(j),RestTableModel::getJsonValue(data));
+                }
             }
             arrRow.push_back(QJsonValue(rowObj));
         }
         QJsonObject obj;
-        obj.insert("title",restRoModel->title());
+        QString title=tr("Таблица");
+        if (restRoModel){
+            title=restRoModel->title();
+        }
+        obj.insert("title",title);
         obj.insert("header_height",this->horizontalHeader()->height());
         obj.insert("columns",arrColumn);
         obj.insert("rows",arrRow);
@@ -234,7 +264,6 @@ void RestTableView::saveXlsx()
                 QDesktopServices::openUrl((QUrl(QUrl::fromLocalFile(fileInfo.absoluteFilePath()))));
             }
         }
-        //qDebug()<<arrColumn;
     }
 }
 

@@ -24,6 +24,12 @@ SOURCES += \
     rest/restrotablemodel.cpp \
     rest/resttablemodel.cpp \
     rest/resttableview.cpp \
+    rest_olap/axiswidget.cpp \
+    rest_olap/cubewidget.cpp \
+    rest_olap/cubic.cpp \
+    rest_olap/dialogolapflt.cpp \
+    rest_olap/formfilter.cpp \
+    rest_olap/olapmodel.cpp \
     tabmanager.cpp
 
 HEADERS += \
@@ -43,6 +49,12 @@ HEADERS += \
     rest/restrotablemodel.h \
     rest/resttablemodel.h \
     rest/resttableview.h \
+    rest_olap/axiswidget.h \
+    rest_olap/cubewidget.h \
+    rest_olap/cubic.h \
+    rest_olap/dialogolapflt.h \
+    rest_olap/formfilter.h \
+    rest_olap/olapmodel.h \
     tabmanager.h
 
 FORMS += \
@@ -50,7 +62,11 @@ FORMS += \
     formreport/formreport.ui \
     mainwindow.ui \
     progressreportdialog/progressreportdialog.ui \
-    rest/restlogin.ui
+    rest/restlogin.ui \
+    rest_olap/axiswidget.ui \
+    rest_olap/cubewidget.ui \
+    rest_olap/dialogolapflt.ui \
+    rest_olap/formfilter.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

@@ -660,7 +660,7 @@ QJsonValue RestTableModel::getJsonValue(const QVariant &val)
         return QJsonValue(val.toTime().toString("hh:mm:ss"));
     }
     case QMetaType::QDateTime: {
-        return QJsonValue(val.toDateTime().toString("yyyy-MM-ddThh:mm:ss"));
+        return QJsonValue(val.toDateTime().toString("yyyy-MM-ddThh:mm:ssZ"));
     }
     default: {
         return val.toJsonValue();

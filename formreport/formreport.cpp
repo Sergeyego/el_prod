@@ -23,7 +23,7 @@ FormReport::FormReport(QWidget *parent) :
 
     connect(ui->pushButtonUpd,SIGNAL(clicked(bool)),model,SLOT(select()));
 
-    connect(ui->pushButtonSave,SIGNAL(clicked(bool)),this,SLOT(save()));
+    connect(ui->pushButtonSave,SIGNAL(clicked(bool)),ui->tableView,SLOT(saveXlsx()));
 
     connect(model,SIGNAL(sigStartRefresh()),progressDialog,SLOT(show()));
     connect(model,SIGNAL(sigRefresh()),progressDialog,SLOT(hide()));
@@ -43,9 +43,3 @@ void FormReport::updPath()
     model->setPath("api/elrtr/report/"+ui->dateEditBeg->date().toString("yyyy-MM-dd")+"/"+ui->dateEditEnd->date().toString("yyyy-MM-dd")+"?"+query.toString());
 }
 
-void FormReport::save()
-{
-    //QString tit=tr("Отчет цеха электродов с ")+ui->dateEditBeg->date().toString("dd.MM.yyyy")+tr(" по ")+ui->dateEditEnd->date().toString("dd.MM.yyyy")+".xlsx";
-    //ui->tableView->save(tit,2,true,Qt::LandscapeOrientation);
-    ui->tableView->saveXlsx();
-}

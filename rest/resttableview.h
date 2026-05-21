@@ -11,6 +11,13 @@
 #include <QDir>
 #include <QDesktopServices>
 
+struct xlsxCol {
+    QString key;
+    QString header;
+    int id_type;
+    int dec;
+    int width;
+};
 
 class RestTableView : public QTableView
 {

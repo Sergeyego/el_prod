@@ -10,6 +10,7 @@
 #include "tabmanager.h"
 #include "formpart/formpart.h"
 #include "formreport/formreport.h"
+#include "rest_olap/cubewidget.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -31,9 +32,12 @@ private:
     void actAction(QAction *a, void (MainWindow::*sl)());
     void loadSettings();
     void saveSettings();
+    void loadAnalytics();
+    QVector<QAction *> analyticsActions;
 
 private slots:
     void newFormPart();
     void newFormReport();
+    void newAnalytics();
 };
 #endif // MAINWINDOW_H
