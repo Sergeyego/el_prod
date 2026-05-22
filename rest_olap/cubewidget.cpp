@@ -11,7 +11,6 @@ CubeWidget::CubeWidget(int id_cube, QWidget *parent) :
     QWidget(parent)
 {
     QString nam, qu;
-    QVariant cols;
     QStringList axes;
     int dec=3;
     QByteArray data;
@@ -21,6 +20,7 @@ CubeWidget::CubeWidget(int id_cube, QWidget *parent) :
         const QJsonObject obj=doc.object();
         nam=obj.value("nam").toString();
         dec=obj.value("dec").toInt();
+        qu=obj.value("qu").toString();
         const QVariantList list=obj.value("columns").toArray().toVariantList();
         for (const QVariant &v : list){
             axes.push_back(v.toString());
@@ -91,6 +91,7 @@ void CubeWidget::inital(QString head, QStringList axes, QString qu, int dec)
     this->setWindowTitle(head);
     olapmodel = new OlapModel(axes,dec,this);
     ui->tableView->setModel(olapmodel);
+    ui->tableView->setDefaultDecimal(decimal);
     updQuery();
     connect(ui->cmdUpd,SIGNAL(clicked()),this,SLOT(updQuery()));
     connect(ui->radioButtonSum,SIGNAL(clicked(bool)),olapmodel,SLOT(setTypeSum(bool)));
@@ -100,7 +101,7 @@ void CubeWidget::inital(QString head, QStringList axes, QString qu, int dec)
     connect(axisX,SIGNAL(sigUpd(QStringList)),olapmodel,SLOT(setX(QStringList)));
     connect(axisY,SIGNAL(sigUpd(QStringList)),olapmodel,SLOT(setY(QStringList)));
     connect(ui->cmdSave,SIGNAL(clicked()),ui->tableView,SLOT(saveXlsx()));
-    //connect(olapmodel,SIGNAL(sigRefresh()),ui->tableView,SLOT(resizeToContents()));
+    connect(olapmodel,SIGNAL(sigRefresh()),ui->tableView,SLOT(resizeToContents()));
     connect(ui->checkBoxFlt,SIGNAL(clicked(bool)),this,SLOT(fltEnable(bool)));
     connect(ui->cmdCfgFlt,SIGNAL(clicked(bool)),this,SLOT(cfgFlt()));
 }
@@ -110,19 +111,23 @@ void CubeWidget::updQuery()
     QString squery=query;
     squery.replace(":d1","'"+ui->dateEditBeg->date().toString("yyyy-MM-dd")+"'");
     squery.replace(":d2","'"+ui->dateEditEnd->date().toString("yyyy-MM-dd")+"'");
-    quModel->setPath("");
-    quModel->select();
-    /*QSqlQuery qu;
-    qu.prepare(squery);
-    if (qu.exec()){
-        quModel->setQuery(qu);
-        for (int i=0; i<quModel->columnCount(); i++){
-            quModel->setHeaderData(i,Qt::Horizontal,header.at(i));
-        }
+    QString title=this->windowTitle()+tr(" с ")+ui->dateEditBeg->date().toString("dd.MM.yyyy")+tr(" по ")+ui->dateEditEnd->date().toString("dd.MM.yyyy");
+    ui->tableView->setWindowTitle(title);
+    QByteArray body, data;
+    QJsonObject obj;
+    obj.insert("qu",QJsonValue(squery));
+    obj.insert("columns",QJsonValue(QJsonArray::fromStringList(header)));
+    obj.insert("nam",QJsonValue(title));
+    obj.insert("dec",QJsonValue(decimal));
+    QJsonDocument bodyDoc;
+    bodyDoc.setObject(obj);
+    body=bodyDoc.toJson();
+    bool ok = HttpSyncManager::sendRequest("api/olap/data","POST",body,data,"application/json");
+    if (ok) {
+        QJsonDocument doc = QJsonDocument::fromJson(data);
+        quModel->setModelData(doc.object());
         upd();
-    } else {
-        QMessageBox::critical(this,tr("Ошибка"),qu.lastError().text(),QMessageBox::Ok);
-    }*/
+    }
 }
 
 void CubeWidget::fltEnable(bool b)

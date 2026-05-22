@@ -6,16 +6,19 @@ RestTableView::RestTableView(QWidget *parent) : QTableView(parent)
     writeOk=true;
     restModel=nullptr;
     restRoModel=nullptr;
+    _dec=0;
     setAutoScroll(true);
     verticalHeader()->setDefaultSectionSize(verticalHeader()->fontMetrics().height()*1.5);
     verticalHeader()->setSectionResizeMode(QHeaderView::Fixed);
     updAct = new QAction(QString::fromUtf8("Обновить"),this);
     removeAct = new QAction(QString::fromUtf8("Удалить"),this);
+    excelAct = new QAction(QString::fromUtf8("Показать в Excel"),this);
     xlsxAct = new QAction(QString::fromUtf8("Сохранить в файл"),this);
 
     connect(updAct,SIGNAL(triggered(bool)),this,SLOT(upd()));
     connect(removeAct,SIGNAL(triggered(bool)),this,SLOT(remove()));
     connect(xlsxAct,SIGNAL(triggered(bool)),this,SLOT(saveXlsx()));
+    connect(excelAct,SIGNAL(triggered(bool)),this,SLOT(viewExcel()));
 }
 
 void RestTableView::setModel(QAbstractItemModel *model)
@@ -37,14 +40,27 @@ void RestTableView::setModel(QAbstractItemModel *model)
             }
         }
         connect(this->selectionModel(),SIGNAL(currentRowChanged(QModelIndex,QModelIndex)),this,SLOT(submit(QModelIndex,QModelIndex)));
-        setMenuEnabled(true);
     } else {
         restRoModel = qobject_cast<RestRoTableModel *>(this->model());
         if (restRoModel){
             connect(restRoModel,SIGNAL(sigRefresh()),this,SLOT(resizeToContents()));
-            setMenuEnabled(true);
         }
     }
+    setMenuEnabled(true);
+}
+
+void RestTableView::setDefaultDecimal(int dec)
+{
+    _dec=dec;
+}
+
+QString RestTableView::getTitle()
+{
+    QString title=this->windowTitle().isEmpty() ? tr("Таблица") : this->windowTitle();
+    if (restRoModel){
+        title=restRoModel->title();
+    }
+    return title;
 }
 
 void RestTableView::keyPressEvent(QKeyEvent *e)
@@ -116,15 +132,18 @@ void RestTableView::contextMenuEvent(QContextMenuEvent *event)
 {
     if (menuEnabled){
         QMenu menu(this);
-        menu.addAction(updAct);
         if (restModel || restRoModel){
+            menu.addAction(updAct);
+            menu.addSeparator();
+        }
+        if (this->model()->rowCount()){
+            menu.addAction(excelAct);
             menu.addAction(xlsxAct);
         }
-        menu.addSeparator();
         if (restModel && this->selectionModel()){
             if (this->indexAt(event->pos()).isValid() && this->editTriggers()!=QAbstractItemView::NoEditTriggers){
-                menu.addAction(removeAct);
                 menu.addSeparator();
+                menu.addAction(removeAct);
             }
         }
         menu.exec(event->globalPos());
@@ -143,6 +162,86 @@ int RestTableView::getSpace(int column)
         }
     }
     return space;
+}
+
+bool RestTableView::createXlsx(QByteArray &xlsx)
+{
+    bool ok=false;
+    if (this->model() && this->model()->rowCount()){
+        QJsonDocument doc;
+        QJsonArray arrRow;
+        QJsonArray arrColumn;
+        QStringList keys;
+        for (int j=0; j<this->model()->columnCount(); j++){
+            xlsxCol inf;
+            inf.width=this->columnWidth(j);
+            if (restModel || restRoModel){
+                colInfo c = restModel ? restModel->columnInfo(j) : restRoModel->columnInfo(j);
+                inf.key = c.nam;
+                inf.header = c.snam;
+                inf.id_type = c.relnam.isEmpty()? RestTableModel::getMetaType(c.udt_name) : QMetaType::QString;
+                inf.dec = c.dec;
+            } else {
+                inf.dec=_dec;
+                inf.key="col-"+QString::number(j);
+                inf.header=this->model()->headerData(j,Qt::Horizontal,Qt::DisplayRole).toString();
+                QVariant data=this->model()->data(this->model()->index(0,j),Qt::EditRole);
+#if (QT_VERSION < QT_VERSION_CHECK(6, 0, 0))
+                inf.id_type=data.type();
+#else
+                inf.id_type=data.typeId();
+#endif
+            }
+            keys.push_back(inf.key);
+
+            if (!this->isColumnHidden(j)){
+                QJsonObject colObj;
+                colObj.insert("key",inf.key);
+                colObj.insert("header",inf.header);
+                colObj.insert("id_type",inf.id_type);
+                colObj.insert("dec",inf.dec);
+                colObj.insert("width",inf.width);
+                arrColumn.push_back(QJsonValue(colObj));
+            }
+        }
+
+        bool vertHeaderEn = (!restModel && !this->verticalHeader()->isHidden());
+
+        for (int i=0; i<this->model()->rowCount(); i++){
+            QJsonObject rowObj;
+            if (vertHeaderEn){
+                rowObj.insert("vert_header",QJsonValue(this->model()->headerData(i,Qt::Vertical,Qt::DisplayRole).toString()));
+            }
+            for (int j=0; j<this->model()->columnCount(); j++){
+                if (!this->isColumnHidden(j)){
+                    int role = (restModel && restModel->isColumnRel(j)) ? Qt::DisplayRole : Qt::EditRole;
+                    QVariant data=this->model()->data(this->model()->index(i,j),role);
+                    rowObj.insert(keys.at(j),RestTableModel::getJsonValue(data));
+                }
+            }
+            arrRow.push_back(QJsonValue(rowObj));
+        }
+
+        if (vertHeaderEn){
+            QJsonObject colObj;
+            colObj.insert("key","vert_header");
+            colObj.insert("header","");
+            colObj.insert("id_type",QMetaType::QString);
+            colObj.insert("dec",0);
+            colObj.insert("width",this->verticalHeader()->width());
+            arrColumn.insert(0,QJsonValue(colObj));
+        }
+
+        QJsonObject obj;
+
+        obj.insert("title",this->getTitle());
+        obj.insert("header_height",this->horizontalHeader()->height());
+        obj.insert("columns",arrColumn);
+        obj.insert("rows",arrRow);
+        doc.setObject(obj);
+        ok = HttpSyncManager::sendRequest("api/xlsx/create","POST",doc.toJson(),xlsx,"application/json");
+    }
+    return ok;
 }
 
 void RestTableView::resizeToContents()
@@ -193,69 +292,36 @@ void RestTableView::setMenuEnabled(bool value)
 
 void RestTableView::saveXlsx()
 {
-    if (this->model() && this->model()->rowCount()){
-        QJsonDocument doc;
-        QJsonArray arrRow;
-        QJsonArray arrColumn;
-        QStringList keys;
-        for (int j=0; j<this->model()->columnCount(); j++){
-            xlsxCol inf;
-            inf.width=this->columnWidth(j);
-            if (restModel || restRoModel){
-                colInfo c = restModel ? restModel->columnInfo(j) : restRoModel->columnInfo(j);
-                inf.key = c.nam;
-                inf.header = c.snam;
-                inf.id_type = c.relnam.isEmpty()? RestTableModel::getMetaType(c.udt_name) : QMetaType::QString;
-                inf.dec = c.dec;
-            } else {
-                inf.dec=0;
-                inf.key="col-"+QString::number(j);
-                inf.header=this->model()->headerData(j,Qt::Horizontal,Qt::DisplayRole).toString();
-                QVariant data=this->model()->data(this->model()->index(0,j),Qt::EditRole);
-#if (QT_VERSION < QT_VERSION_CHECK(6, 0, 0))
-                inf.id_type=data.type();
-#else
-                inf.id_type=data.typeId();
-#endif
+    QByteArray data;
+    if (createXlsx(data)) {
+        QString fnam = this->getTitle();
+        QSettings settings("szsm", QApplication::applicationName());
+        QDir dir(settings.value("savePath",QDir::homePath()).toString());
+        QString filename = QFileDialog::getSaveFileName(nullptr,QString::fromUtf8("Сохранить документ"),
+                                                        dir.path()+"/"+fnam,
+                                                        QString::fromUtf8("Documents (*.xlsx)") );
+        if (!filename.isEmpty()){
+            if (filename.right(5)!=".xlsx"){
+                filename+=".xlsx";
             }
-            keys.push_back(inf.key);
+            QFile file(filename);
+            if (file.open(QIODevice::WriteOnly)){
+                file.write(data);
+                file.close();
+                QFileInfo fileInfo(file);
+                settings.setValue("savePath",fileInfo.path());
+            }
+        }
+    }
+}
 
-            if (!this->isColumnHidden(j)){
-                QJsonObject colObj;
-                colObj.insert("key",inf.key);
-                colObj.insert("header",inf.header);
-                colObj.insert("id_type",inf.id_type);
-                colObj.insert("dec",inf.dec);
-                colObj.insert("width",inf.width);
-                arrColumn.push_back(QJsonValue(colObj));
-            }
-        }
-
-        for (int i=0; i<this->model()->rowCount(); i++){
-            QJsonObject rowObj;
-            for (int j=0; j<this->model()->columnCount(); j++){
-                if (!this->isColumnHidden(j)){
-                    int role = (restModel && restModel->isColumnRel(j)) ? Qt::DisplayRole : Qt::EditRole;
-                    QVariant data=this->model()->data(this->model()->index(i,j),role);
-                    rowObj.insert(keys.at(j),RestTableModel::getJsonValue(data));
-                }
-            }
-            arrRow.push_back(QJsonValue(rowObj));
-        }
-        QJsonObject obj;
-        QString title=tr("Таблица");
-        if (restRoModel){
-            title=restRoModel->title();
-        }
-        obj.insert("title",title);
-        obj.insert("header_height",this->horizontalHeader()->height());
-        obj.insert("columns",arrColumn);
-        obj.insert("rows",arrRow);
-        doc.setObject(obj);
-        QByteArray data;
-        bool ok = HttpSyncManager::sendRequest("api/xlsx/create","POST",doc.toJson(),data,"application/json");
-        if (ok) {
-            QString totalName=QDir::homePath()+"/xlsx/test.xlsx";
+void RestTableView::viewExcel()
+{
+    QByteArray data;
+    if (createXlsx(data)) {
+        QDir dir(QDir::homePath()+"/.szsm/cash");
+        if (dir.mkpath(dir.path())){
+            QString totalName=dir.path()+"/"+QString::number(QDateTime::currentMSecsSinceEpoch())+".xlsx";
             QFile file(totalName);
             if (file.open(QIODevice::WriteOnly)){
                 file.write(data);

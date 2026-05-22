@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include <QAction>
+#include <QDir>
 #include "rest/httpsyncmanager.h"
 #include "rest/resttablemodel.h"
 #include "rest/restrelmodel.h"
@@ -33,7 +34,6 @@ private:
     void loadSettings();
     void saveSettings();
     void loadAnalytics();
-    QVector<QAction *> analyticsActions;
 
 private slots:
     void newFormPart();

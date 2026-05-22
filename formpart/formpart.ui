@@ -352,7 +352,7 @@
           </widget>
          </item>
          <item>
-          <widget class="QTableView" name="tableViewGlassData">
+          <widget class="RestTableView" name="tableViewGlassData">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Expanding" vsizetype="Maximum">
              <horstretch>0</horstretch>
@@ -376,7 +376,7 @@
           </widget>
          </item>
          <item>
-          <widget class="QTableView" name="tableViewGlassPar">
+          <widget class="RestTableView" name="tableViewGlassPar">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Expanding" vsizetype="Maximum">
              <horstretch>0</horstretch>

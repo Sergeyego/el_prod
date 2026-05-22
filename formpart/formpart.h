@@ -7,7 +7,7 @@
 #include <QSettings>
 #include "rest/resttablemodel.h"
 #include "rest/restmapper.h"
-#include <QElapsedTimer>
+#include "rest/restrotablemodel.h"
 
 namespace Ui {
 class FormPart;
@@ -23,6 +23,8 @@ public:
 
 private:
     Ui::FormPart *ui;
+    RestRoTableModel *modelConsStatData;
+    RestRoTableModel *modelConsStatPar;
     RestTableModel *modelPart;
     RestTableModel *modelGlass;
     RestTableModel *modelZam;
@@ -36,13 +38,14 @@ private:
     void saveSettings();
 
 private slots:
+    void selectGlass();
     void setDefaultValue();
     void updPart();
     void refreshCont(int ind);
     void setCurrentChemDev();
     void loadChem();
     void insertChemSamp();
-    //void refreshGlassData(QModelIndex index);
+    void refreshGlassData(QModelIndex index);
     void insertMark();
     void insertProvol();
     void insertPack();

@@ -18,6 +18,12 @@ FormPart::FormPart(QWidget *parent) :
     cDev.val=1;
     ui->comboBoxChemDev->setCurrentData(cDev);
 
+    modelConsStatData = new RestRoTableModel(this);
+    ui->tableViewGlassData->setModel(modelConsStatData);
+
+    modelConsStatPar = new RestRoTableModel(this);
+    ui->tableViewGlassPar->setModel(modelConsStatPar);
+
     modelGlass = new RestTableModel("acc_glyba",this);
     ui->tableViewGlass->setModel(modelGlass);
 
@@ -104,21 +110,20 @@ FormPart::FormPart(QWidget *parent) :
     connect(ui->comboBoxChemDev,SIGNAL(currentIndexChanged(int)),this,SLOT(setCurrentChemDev()));
     connect(ui->pushButtonChem,SIGNAL(clicked(bool)),this,SLOT(loadChem()));
     connect(ui->pushButtonSamp,SIGNAL(clicked(bool)),this,SLOT(insertChemSamp()));
+    connect(ui->tableViewGlass->selectionModel(),SIGNAL(currentRowChanged(QModelIndex,QModelIndex)),this,SLOT(refreshGlassData(QModelIndex)));
+    connect(modelGlass,SIGNAL(sigRefresh()),this,SLOT(selectGlass()));
 
     updPart();
 
-    /*
-    modelConsStatData = new ModelConsStatData(this);
-    modelConsStatData->refresh(-1);
-    ui->tableViewGlassData->setModel(modelConsStatData);
-    ui->tableViewGlassData->setColumnHidden(0,true);
+
+    /*ui->tableViewGlassData->setColumnHidden(0,true);
     ui->tableViewGlassData->setColumnWidth(1,40);
     ui->tableViewGlassData->setColumnWidth(2,70);
     ui->tableViewGlassData->setColumnWidth(3,60);
     ui->tableViewGlassData->setColumnWidth(4,70);
-    ui->tableViewGlassData->setColumnHidden(5,true);
+    ui->tableViewGlassData->setColumnHidden(5,true);*/
 
-    modelConsStatPar = new ModelConsStatPar(this);
+    /*modelConsStatPar = new ModelConsStatPar(this);
     modelConsStatPar->refresh(-1,-1);
     ui->tableViewGlassPar->setModel(modelConsStatPar);
     ui->tableViewGlassPar->setColumnHidden(0,true);
@@ -175,6 +180,11 @@ void FormPart::saveSettings()
     settings.setValue("part_tab_index",ui->tabWidget->currentIndex());
 }
 
+void FormPart::selectGlass()
+{
+    ui->tableViewGlass->setCurrentIndex(ui->tableViewGlass->model()->index(0,2));
+}
+
 void FormPart::setDefaultValue()
 {
     int old_num=0;
@@ -219,12 +229,10 @@ void FormPart::refreshCont(int ind)
     //qDebug()<<"refresh_cont!";
     int id_part=mapper->modelData(ind,"id").isNull() ? -1 : mapper->modelData(ind,"id").toInt();
     QDate dat_part=mapper->modelData(ind,"dat_part").toDate();
-    //updRow();
 
     modelGlass->setFilter(modelGlass->tableName()+".id_part = "+QString::number(id_part));
     modelGlass->setDefaultValue("id_part",id_part);
     modelGlass->select();
-    //ui->tableViewGlass->setCurrentIndex(ui->tableViewGlass->model()->index(0,2));
 
     modelZam->setFilter(modelZam->tableName()+".id_part = "+QString::number(id_part));
     modelZam->setDefaultValue("id_part",id_part);
@@ -298,10 +306,15 @@ void FormPart::insertChemSamp()
     modelPart->refreshState();*/
 }
 
-/*void FormPart::refreshGlassData(QModelIndex index)
+void FormPart::refreshGlassData(QModelIndex index)
 {
+    QString id_part = mapper->modelData(mapper->currentIndex(),"id").toString();
+    QVariant id_c=ui->tableViewGlass->model()->data(ui->tableViewGlass->model()->index(index.row(),3),Qt::EditRole);
 
-}*/
+    modelConsStatData->setPath("api/elrtr/glass/"+id_part+"/"+id_c.toString());
+    modelConsStatData->select();
+}
+
 
 void FormPart::insertMark()
 {

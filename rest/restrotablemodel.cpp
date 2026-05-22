@@ -121,7 +121,11 @@ void RestRoTableModel::setModelData(const QJsonObject &data)
     const QJsonArray rows=data.value("rows").toArray();
     for (const QJsonValue &val : rows) {
         QVector<cellData> row;
-        for (const QString &col_nam : _columns){
+#if (QT_VERSION < QT_VERSION_CHECK(6, 0, 0))
+        for (const QString &col_nam : qAsConst(_columns)){
+#else
+        for (const QString &col_nam : std::as_const(_columns)){
+#endif
             colInfo col = colMap.value(col_nam);
             QJsonObject obj = val.toObject().value(col.nam).toObject();
             cellData cell;
@@ -135,6 +139,15 @@ void RestRoTableModel::setModelData(const QJsonObject &data)
     }
     endResetModel();
     emit sigRefresh();
+}
+
+bool RestRoTableModel::setHeaderData(int section, Qt::Orientation orientation, const QVariant &value, int role)
+{
+    if (orientation==Qt::Horizontal && role==Qt::EditRole && section>=0 && section<columnCount()){
+        colMap[_columns.at(section)].snam=value.toString();
+        return true;
+    }
+    return QAbstractTableModel::setHeaderData(section,orientation,value,role);
 }
 
 QString RestRoTableModel::title() const
@@ -161,6 +174,11 @@ void RestRoTableModel::select()
 void RestRoTableModel::onResult(QNetworkReply *reply)
 {
     if (reply->error()){
+        beginResetModel();
+        _columns.clear();
+        colMap.clear();
+        endResetModel();
+        emit sigRefresh();
         QMessageBox::critical(nullptr,tr("Ошибка"),reply->errorString()+"\n"+reply->readAll(),QMessageBox::Cancel);
     } else {
         QJsonDocument doc = QJsonDocument::fromJson(reply->readAll());

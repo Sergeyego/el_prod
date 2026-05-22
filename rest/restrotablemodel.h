@@ -18,6 +18,7 @@ public:
     QMetaType::Type columnType(int col) const;
     void setPath(QString p);
     void setModelData(const QJsonObject &data);
+    bool setHeaderData(int section, Qt::Orientation orientation, const QVariant &value, int role=Qt::EditRole);
     QString title() const;
 
 public slots:
