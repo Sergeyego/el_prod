@@ -12,6 +12,8 @@ FormPart::FormPart(QWidget *parent) :
     ui->dateEditBeg->setDate(QDate(QDate::currentDate().year(),1,1));
     ui->dateEditEnd->setDate(QDate(QDate::currentDate().year(),12,31));
 
+    manager = new QNetworkAccessManager(this);
+
     ui->comboBoxOnly->setModel(RelModels::instance()->getModel("mark"));
     ui->comboBoxChemDev->setModel(RelModels::instance()->getModel("chem_dev"));
     colVal cDev;
@@ -114,50 +116,6 @@ FormPart::FormPart(QWidget *parent) :
     connect(modelGlass,SIGNAL(sigRefresh()),this,SLOT(selectGlass()));
 
     updPart();
-
-
-    /*ui->tableViewGlassData->setColumnHidden(0,true);
-    ui->tableViewGlassData->setColumnWidth(1,40);
-    ui->tableViewGlassData->setColumnWidth(2,70);
-    ui->tableViewGlassData->setColumnWidth(3,60);
-    ui->tableViewGlassData->setColumnWidth(4,70);
-    ui->tableViewGlassData->setColumnHidden(5,true);*/
-
-    /*modelConsStatPar = new ModelConsStatPar(this);
-    modelConsStatPar->refresh(-1,-1);
-    ui->tableViewGlassPar->setModel(modelConsStatPar);
-    ui->tableViewGlassPar->setColumnHidden(0,true);
-    ui->tableViewGlassPar->setColumnWidth(1,80);
-    ui->tableViewGlassPar->setColumnWidth(2,60);
-    ui->tableViewGlassPar->setColumnWidth(3,70);
-    ui->tableViewGlassPar->setColumnWidth(4,80);
-
-    modelPackPal = new ModelPackPal(this);
-    ui->tableViewPackPal->setModel(modelPackPal);
-
-    modelPackEl = new ModelPackEl(this);
-    ui->tableViewPack->setModel(modelPackEl);
-
-    modelThermoPack = new ModelThermoPack(this);
-    ui->tableViewThermoPack->setModel(modelThermoPack);
-
-    modelPerePackEl = new ModelPerePackEl(this);
-    ui->tableViewPerePack->setModel(modelPerePackEl);
-
-    modelStockEl = new ModelStockEl(this);
-    ui->tableViewTrans->setModel(modelStockEl);
-
-    modelSelfEl = new ModelSelfEl(this);
-    ui->tableViewSelf->setModel(modelSelfEl);
-
-    modelShipEl = new ModelShipEl(this);
-    ui->tableViewShip->setModel(modelShipEl);
-
-    modelBreakEl = new ModelBreakEl(this);
-    ui->tableViewDef->setModel(modelBreakEl);
-
-    connect(ui->tableViewGlass->selectionModel(),SIGNAL(currentRowChanged(QModelIndex,QModelIndex)),this,SLOT(refreshGlassData(QModelIndex)));
-    */
 }
 
 FormPart::~FormPart()
@@ -256,14 +214,16 @@ void FormPart::refreshCont(int ind)
     modelMech->setDefaultValue("id_part",id_part);
     modelMech->select();
 
-    /*refreshStat(ui->groupBoxPackPal,ui->tableViewPackPal);
-    refreshStat(ui->groupBoxPack,ui->tableViewPack);
-    refreshStat(ui->groupBoxThermoPack,ui->tableViewThermoPack);
-    refreshStat(ui->groupBoxPerepack,ui->tableViewPerePack);
-    refreshStat(ui->groupBoxTrans,ui->tableViewTrans);
-    refreshStat(ui->groupBoxSelf,ui->tableViewSelf);
-    refreshStat(ui->groupBoxShip,ui->tableViewShip);
-    refreshStat(ui->groupBoxDef,ui->tableViewDef);*/
+    clearStat();
+
+    QUrl url = QUrl(RestConnection::instance()->getUrl()+"/api/elrtr/stat/"+QString::number(id_part));
+    QNetworkRequest request(url);
+    request.setRawHeader("Accept-Charset", "UTF-8");
+    request.setRawHeader("User-Agent", "Appszsm");
+    request.setRawHeader("Authorization", "Bearer "+RestConnection::instance()->getToken().toUtf8());
+    QNetworkReply *reply = manager->get(request);
+    reply->ignoreSslErrors();
+    connect(reply,SIGNAL(finished()),this,SLOT(updStat()));
 }
 
 void FormPart::setCurrentChemDev()
@@ -313,6 +273,77 @@ void FormPart::refreshGlassData(QModelIndex index)
 
     modelConsStatData->setPath("api/elrtr/glass/"+id_part+"/"+id_c.toString());
     modelConsStatData->select();
+
+    modelConsStatPar->setPath("api/elrtr/glasspar/"+id_part+"/"+id_c.toString());
+    modelConsStatPar->select();
+}
+
+void FormPart::clearStat()
+{
+    QLayout* layout = ui->scrollAreaWidgetContents->layout();
+    if (layout) {
+        QLayoutItem* item;
+        // Цикл извлекает первый элемент, пока компоновщик не опустеет
+        while ((item = layout->takeAt(0)) != nullptr) {
+            // Если это виджет — удаляем его
+            if (item->widget()) {
+                delete item->widget();
+            }
+            // Удаляем сам элемент компоновщика (отступы, спейсеры)
+            delete item;
+        }
+    }
+}
+
+void FormPart::updStat()
+{
+    QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
+    if (reply){
+        QByteArray data=reply->readAll();
+        bool ok=(reply->error()==QNetworkReply::NoError);
+        if (!ok){
+            QMessageBox::critical(nullptr,tr("Ошибка"),reply->errorString()+"\n"+data,QMessageBox::Cancel);
+        } else {
+            const QJsonDocument doc = QJsonDocument::fromJson(data);
+            //QSignalBlocker b(manager);
+            for (const QJsonValue &val : doc.array()){
+                QJsonArray rows = val.toObject().value("rows").toArray();
+                if (!rows.size()){
+                    continue;
+                }
+                QGroupBox *box = new QGroupBox(this);
+                box->setTitle(val.toObject().value("title").toString());
+                RestTableView *view = new RestTableView(box);
+                box->setLayout(new QVBoxLayout(box));
+                box->layout()->addWidget(view);
+                RestRoTableModel *model = new RestRoTableModel(view);
+                view->setModel(model);
+                model->setModelData(val.toObject());
+                view->verticalHeader()->setVisible(false);
+
+                box->setFlat(true);
+                box->layout()->setContentsMargins(2,8,2,2);
+
+                ui->scrollAreaWidgetContents->layout()->addWidget(box);
+
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 11, 0))
+                int tw=5+box->fontMetrics().horizontalAdvance(box->title());
+#else
+                int tw=5+box->fontMetrics().width(box->title());
+#endif
+                int w=30+view->verticalHeader()->frameSize().width();
+                for (int i=0; i<view->model()->columnCount(); i++){
+                    if (!view->isColumnHidden(i)){
+                        w+=view->columnWidth(i);
+                    }
+                }
+                w=(tw>w)? tw : w;
+                box->setMinimumSize(w,0);
+            }
+            ui->scrollAreaWidgetContents->layout()->addItem(new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Minimum));
+        }
+        reply->deleteLater();
+    }
 }
 
 

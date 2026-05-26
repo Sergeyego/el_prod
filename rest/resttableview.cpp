@@ -132,7 +132,7 @@ void RestTableView::contextMenuEvent(QContextMenuEvent *event)
 {
     if (menuEnabled){
         QMenu menu(this);
-        if (restModel || restRoModel){
+        if (restModel || (restRoModel && !restRoModel->path().isEmpty())){
             menu.addAction(updAct);
             menu.addSeparator();
         }
@@ -249,6 +249,14 @@ void RestTableView::resizeToContents()
     if (!model()) return;
     int n=model()->columnCount();
     int m=model()->rowCount();
+    if (restRoModel){
+        for (int i=0; i<n; i++){
+            colInfo inf = restRoModel->columnInfo(i);
+            if (!isColumnHidden(i) && inf.width.toInt()<0){
+                this->setColumnHidden(i,true);
+            }
+        }
+    }
     int max=0;
     QStringList l;
     QString s;

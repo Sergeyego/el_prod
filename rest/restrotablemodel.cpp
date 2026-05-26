@@ -113,7 +113,7 @@ void RestRoTableModel::setModelData(const QJsonObject &data)
         inf.relnam="";
         inf.flags=(Qt::ItemIsSelectable | Qt::ItemIsUserCheckable | Qt::ItemIsEnabled);
         inf.defaultVal=QVariant();
-        inf.width=QVariant();
+        inf.width=value.toObject().value("width").toInt();
         _columns.push_back(inf.nam);
         colMap.insert(inf.nam,inf);
     }
@@ -155,6 +155,15 @@ QString RestRoTableModel::title() const
     return _title;
 }
 
+QString RestRoTableModel::path() const
+{
+    return _path;
+}
+
+QVariant RestRoTableModel::getModelData(int row, QString col) const
+{
+    return this->data(this->index(row,_columns.indexOf(col)),Qt::EditRole);
+}
 
 void RestRoTableModel::select()
 {

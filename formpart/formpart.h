@@ -33,6 +33,7 @@ private:
     RestTableModel *modelChem;
     RestTableModel *modelMech;
     RestMapper *mapper;
+    QNetworkAccessManager *manager;
 
     void loadSettings();
     void saveSettings();
@@ -46,6 +47,8 @@ private slots:
     void loadChem();
     void insertChemSamp();
     void refreshGlassData(QModelIndex index);
+    void clearStat();
+    void updStat();
     void insertMark();
     void insertProvol();
     void insertPack();
