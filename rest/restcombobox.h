@@ -47,8 +47,8 @@ public:
     ~RestComboBox();
     void setIndex(const QModelIndex &index);
     void setModel(QAbstractItemModel *model);
+
 private:
-    //CustomCompletter *restCompleter;
     colVal currentData;
     colVal saveData;
     QAction *actionEdt;

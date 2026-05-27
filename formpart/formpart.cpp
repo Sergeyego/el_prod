@@ -204,7 +204,7 @@ void FormPart::refreshCont(int ind)
 
     modelZamBreak->setFilter(modelZamBreak->tableName()+".id_part = "+QString::number(id_part));
     modelZamBreak->setDefaultValue("id_part",id_part);
-    modelZamBreak->setDefaultValue("dat_part",dat_part);
+    modelZamBreak->setDefaultValue("dat",dat_part);
     modelZamBreak->select();
 
     modelRab->setFilter(modelRab->tableName()+".id_part = "+QString::number(id_part));
@@ -253,19 +253,27 @@ void FormPart::setCurrentChemDev()
 
 void FormPart::loadChem()
 {
-    /*DialogLoadChem d;
+    DialogLoadChem d;
     if (d.exec()==QDialog::Accepted){
-        QList <int> l = modelChem->ids();
-        foreach (int key,l){
-            QString chem=Rels::instance()->relChem->getDisplayValue(key);
-            double val=d.chemVal(chem);
-            if (val>0){
-                modelChem->addChem(key,val,2);
+        QMap<QString, double> map = d.chemVals();
+        if (map.size()){
+            QJsonObject obj;
+            QMap<QString, double>::const_iterator i = map.constBegin();
+            while (i != map.constEnd()) {
+                obj.insert(i.key(),QJsonValue(i.value()));
+                ++i;
+            }
+            QString id_part = mapper->modelData(mapper->currentIndex(),"id").toString();
+            QJsonDocument doc;
+            doc.setObject(obj);
+            QByteArray data;
+            bool ok = RestConnection::instance()->sendSyncRequest("api/elrtr/chem/load/"+id_part+"/2","POST",doc.toJson(),data);
+            if (ok){
+                modelChem->select();
+                modelPart->refreshRow(mapper->currentIndex());
             }
         }
     }
-    modelChem->select();
-    modelPart->refreshState();*/
 }
 
 void FormPart::insertChemSamp()

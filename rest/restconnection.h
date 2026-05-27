@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QDateTime>
 #include <QApplication>
+#include <QNetworkReply>
 #include "rest/restlogin.h"
 
 class RestConnection : public QObject

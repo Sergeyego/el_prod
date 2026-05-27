@@ -192,6 +192,8 @@ void RestTableModel::setDefaultValue(QString column, QVariant value)
 {
     if (colMap.contains(column)){
         colMap[column].defaultVal=value;
+    } else {
+        qDebug()<<"Not found: "+this->tableName()+" - "+column;
     }
 }
 
@@ -199,6 +201,8 @@ void RestTableModel::setColumnFlags(QString column, Qt::ItemFlags flags)
 {
     if (colMap.contains(column)){
         colMap[column].flags=flags;
+    } else {
+        qDebug()<<"Not found: "+this->tableName()+" - "+column;
     }
 }
 
@@ -321,6 +325,31 @@ void RestTableModel::select()
     }
 }
 
+void RestTableModel::selectSync()
+{
+    QByteArray data;
+    QUrlQuery query;
+    query.addQueryItem("filter",_filter);
+    bool ok = RestConnection::instance()->sendSyncGet(_path+"?"+query.toString(),data);
+    if (ok){
+        QJsonDocument doc = QJsonDocument::fromJson(data);
+        const QJsonArray rows=doc.array();
+        this->setModelData(rows);
+    } else {
+        this->clear();
+    }
+    emit sigRefresh();
+}
+
+void RestTableModel::clear()
+{
+    beginResetModel();
+    editor->revert();
+    modelData.clear();
+    editor->add(0,defaultRow());
+    endResetModel();
+}
+
 void RestTableModel::processNextRequest()
 {
     if (queue.isEmpty()) {
@@ -342,25 +371,12 @@ void RestTableModel::onResult()
         return;
     }
     if (reply->error()){
-        beginResetModel();
-        editor->revert();
-        modelData.clear();
-        editor->add(0,defaultRow());
-        endResetModel();
+        this->clear();
         QMessageBox::critical(nullptr,tr("Ошибка"),reply->errorString()+"\n"+reply->readAll(),QMessageBox::Cancel);
     } else {
         QJsonDocument doc = QJsonDocument::fromJson(reply->readAll());
         const QJsonArray rows=doc.array();
-        beginResetModel();
-        editor->revert();
-        modelData.clear();
-        for (const QJsonValue &value : rows) {
-            modelData.push_back(loadRow(value));
-        }
-        if (!modelData.size()){
-            editor->add(0,defaultRow());
-        }
-        endResetModel();
+        this->setModelData(rows);
     }
     emit sigRefresh();
     reply->deleteLater();
@@ -437,6 +453,20 @@ void RestTableModel::loadInfo()
             colMap.insert(inf.nam,inf);
         }
     }
+}
+
+void RestTableModel::setModelData(const QJsonArray &data)
+{
+    beginResetModel();
+    editor->revert();
+    modelData.clear();
+    for (const QJsonValue &value : data) {
+        modelData.push_back(loadRow(value));
+    }
+    if (!modelData.size()){
+        editor->add(0,defaultRow());
+    }
+    endResetModel();
 }
 
 bool RestTableModel::apiInsert()

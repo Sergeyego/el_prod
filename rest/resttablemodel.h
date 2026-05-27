@@ -100,6 +100,8 @@ public:
 
 public slots:
     virtual void select();
+    virtual void selectSync();
+    void clear();
     virtual void revert();
     virtual bool submitRow();
 
@@ -121,6 +123,7 @@ private:
     bool block;
     bool insertable;
     void loadInfo();
+    void setModelData(const QJsonArray &data);
     bool apiInsert();
     bool apiUpdate();
     bool apiDelete(int row);

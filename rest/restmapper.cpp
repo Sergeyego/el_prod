@@ -185,7 +185,7 @@ void RestMapper::slotNew()
 {
     RestTableModel *restModel = qobject_cast<RestTableModel *>(mapper->model());
     if (restModel) {
-        restModel->select();
+        restModel->selectSync();
         restModel->insertRow(restModel->rowCount());
         setCurrentViewRow(restModel->rowCount()-1);
         if (restModel->isAdd()) lock(true);

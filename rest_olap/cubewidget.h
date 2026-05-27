@@ -2,12 +2,12 @@
 #define CUBEWIDGET_H
 
 #include <QWidget>
-#include "olapmodel.h"
-#include <QCalendarWidget>
-#include "axiswidget.h"
-#include "dialogolapflt.h"
 #include <QJsonDocument>
 #include <QJsonArray>
+#include <QCalendarWidget>
+#include "olapmodel.h"
+#include "axiswidget.h"
+#include "dialogolapflt.h"
 #include "rest/restrotablemodel.h"
 
 namespace Ui {

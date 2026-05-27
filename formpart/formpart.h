@@ -8,6 +8,7 @@
 #include "rest/resttablemodel.h"
 #include "rest/restmapper.h"
 #include "rest/restrotablemodel.h"
+#include "dialogloadchem/dialogloadchem.h"
 
 namespace Ui {
 class FormPart;

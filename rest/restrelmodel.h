@@ -3,7 +3,6 @@
 
 #include <QAbstractTableModel>
 #include <QObject>
-#include <QNetworkAccessManager>
 #include <QQueue>
 #include <QJsonArray>
 #include <QUrlQuery>

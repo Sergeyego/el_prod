@@ -2,14 +2,14 @@
 #define RESTMAPPER_H
 
 #include <QWidget>
-#include "resttablemodel.h"
 #include <QDataWidgetMapper>
-#include "restitemdelegate.h"
 #include <QTableView>
 #include <QListView>
 #include <QPushButton>
 #include <QHBoxLayout>
 #include <QApplication>
+#include "resttablemodel.h"
+#include "restitemdelegate.h"
 
 class RestMapper : public QWidget
 {

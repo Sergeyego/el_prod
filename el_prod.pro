@@ -7,6 +7,7 @@ CONFIG += c++17
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    dialogloadchem/dialogloadchem.cpp \
     formpart/formpart.cpp \
     formreport/formreport.cpp \
     main.cpp \
@@ -32,6 +33,7 @@ SOURCES += \
     tabmanager.cpp
 
 HEADERS += \
+    dialogloadchem/dialogloadchem.h \
     formpart/formpart.h \
     formreport/formreport.h \
     mainwindow.h \
@@ -56,6 +58,7 @@ HEADERS += \
     tabmanager.h
 
 FORMS += \
+    dialogloadchem/dialogloadchem.ui \
     formpart/formpart.ui \
     formreport/formreport.ui \
     mainwindow.ui \
