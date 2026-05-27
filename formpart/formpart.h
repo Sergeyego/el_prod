@@ -34,6 +34,8 @@ private:
     RestTableModel *modelMech;
     RestMapper *mapper;
     QNetworkAccessManager *manager;
+    QQueue<QUrl> queue;
+    bool isProcessing;
 
     void loadSettings();
     void saveSettings();
@@ -43,6 +45,7 @@ private slots:
     void setDefaultValue();
     void updPart();
     void refreshCont(int ind);
+    void processNextRequest();
     void setCurrentChemDev();
     void loadChem();
     void insertChemSamp();

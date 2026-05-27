@@ -2,6 +2,7 @@
 
 RestRelModel::RestRelModel(QString name, QObject *parent) : QAbstractTableModel(parent), _name(name)
 {
+    isProcessing=false;
     _is_limited=false;
     _path="api/autorest/relations/"+_name;
     QByteArray data;
@@ -63,14 +64,10 @@ void RestRelModel::refreshByPattern(QString pattern)
     QUrl url = QUrl(RestConnection::instance()->getUrl()+"/"+_path);
     url.setQuery(query);
 
-    QNetworkRequest request(url);
-    request.setRawHeader("Accept-Charset", "UTF-8");
-    request.setRawHeader("User-Agent", "Appszsm");
-    request.setRawHeader("Authorization", "Bearer "+RestConnection::instance()->getToken().toUtf8());
-
-    QNetworkReply *reply = manager->get(request);
-    reply->ignoreSslErrors();
-    reply->setProperty("pattern",pattern);
+    queue.enqueue(url);
+    if (!isProcessing) {
+        processNextRequest();
+    }
 }
 
 void RestRelModel::clear()
@@ -78,6 +75,27 @@ void RestRelModel::clear()
     beginResetModel();
     _data.clear();
     endResetModel();
+}
+
+void RestRelModel::processNextRequest()
+{
+    if (queue.isEmpty()) {
+        isProcessing = false;
+        return;
+    }
+
+    isProcessing = true;
+    QUrl url = queue.dequeue();
+    QUrlQuery query(url);
+    QString pattern = query.queryItemValue("like");
+
+    QNetworkRequest request(url);
+    request.setRawHeader("Accept-Charset", "UTF-8");
+    request.setRawHeader("User-Agent", "Appszsm");
+    request.setRawHeader("Authorization", "Bearer "+RestConnection::instance()->getToken().toUtf8());
+    QNetworkReply *reply = manager->get(request);
+    reply->ignoreSslErrors();
+    reply->setProperty("pattern",pattern);
 }
 
 void RestRelModel::onResult(QNetworkReply *reply)
@@ -99,4 +117,5 @@ void RestRelModel::onResult(QNetworkReply *reply)
         emit refreshFinished(reply->property("pattern").toString());
     }
     reply->deleteLater();
+    processNextRequest();
 }

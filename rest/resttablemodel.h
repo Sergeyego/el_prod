@@ -5,6 +5,7 @@
 #include <QObject>
 #include <QColor>
 #include <QJsonArray>
+#include <QQueue>
 #include "rest/httpsyncmanager.h"
 #include "rest/restrelmodel.h"
 
@@ -104,10 +105,13 @@ public slots:
     virtual bool submitRow();
 
 private slots:
+    void processNextRequest();
     void onResult(QNetworkReply *reply);
 
 private:
     QNetworkAccessManager *manager;
+    QQueue<QUrl> queue;
+    bool isProcessing;
     DataEditor *editor;
     QVector<QVector<cellData>> modelData;
     QMap<QString,colInfo> colMap;

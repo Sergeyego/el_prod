@@ -3,6 +3,7 @@
 RestRoTableModel::RestRoTableModel(QObject *parent) : QAbstractTableModel{parent}
 {
     manager = new QNetworkAccessManager(this);
+    isProcessing=false;
     connect(manager,SIGNAL(finished(QNetworkReply*)),this,SLOT(onResult(QNetworkReply*)));
 }
 
@@ -171,6 +172,23 @@ void RestRoTableModel::select()
         return;
     }
     QUrl url = QUrl(RestConnection::instance()->getUrl()+"/"+_path);
+
+    queue.enqueue(url);
+    if (!isProcessing) {
+        processNextRequest();
+    }
+}
+
+void RestRoTableModel::processNextRequest()
+{
+    if (queue.isEmpty()) {
+        isProcessing = false;
+        return;
+    }
+
+    isProcessing = true;
+    QUrl url = queue.dequeue();
+
     QNetworkRequest request(url);
     request.setRawHeader("Accept-Charset", "UTF-8");
     request.setRawHeader("User-Agent", "Appszsm");
@@ -194,4 +212,5 @@ void RestRoTableModel::onResult(QNetworkReply *reply)
         setModelData(doc.object());
     }
     reply->deleteLater();
+    processNextRequest();
 }

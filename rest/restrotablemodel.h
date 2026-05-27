@@ -27,6 +27,7 @@ public slots:
     void select();
 
 private slots:
+    void processNextRequest();
     void onResult(QNetworkReply *reply);
 
 private:
@@ -36,6 +37,8 @@ private:
     QString _title;
     QStringList _columns;
     QNetworkAccessManager *manager;
+    QQueue<QUrl> queue;
+    bool isProcessing;
 
 signals :
     void sigRefresh();

@@ -3,6 +3,7 @@
 RestTableModel::RestTableModel(QString name, QObject *parent) : QAbstractTableModel(parent), _rname(name)
 {
     manager = new QNetworkAccessManager(this);
+    isProcessing=false;
     _path = "api/autorest/tables/"+_rname;
     block=false;
     insertable=true;
@@ -315,6 +316,23 @@ void RestTableModel::select()
     QUrlQuery query;
     query.addQueryItem("filter",_filter);
     url.setQuery(query);
+
+    queue.enqueue(url);
+    if (!isProcessing) {
+        processNextRequest();
+    }
+}
+
+void RestTableModel::processNextRequest()
+{
+    if (queue.isEmpty()) {
+        isProcessing = false;
+        return;
+    }
+
+    isProcessing = true;
+    QUrl url = queue.dequeue();
+
     QNetworkRequest request(url);
     request.setRawHeader("Accept-Charset", "UTF-8");
     request.setRawHeader("User-Agent", "Appszsm");
@@ -322,7 +340,6 @@ void RestTableModel::select()
     QNetworkReply *reply = manager->get(request);
     reply->ignoreSslErrors();
 }
-
 
 void RestTableModel::onResult(QNetworkReply *reply)
 {
@@ -336,7 +353,6 @@ void RestTableModel::onResult(QNetworkReply *reply)
     } else {
         QJsonDocument doc = QJsonDocument::fromJson(reply->readAll());
         const QJsonArray rows=doc.array();
-        QSignalBlocker b(manager);
         beginResetModel();
         editor->revert();
         modelData.clear();
@@ -350,6 +366,7 @@ void RestTableModel::onResult(QNetworkReply *reply)
     }
     emit sigRefresh();
     reply->deleteLater();
+    processNextRequest();
 }
 
 

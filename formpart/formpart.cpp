@@ -7,6 +7,8 @@ FormPart::FormPart(QWidget *parent) :
 {
     ui->setupUi(this);
 
+    isProcessing=false;
+
     loadSettings();
 
     ui->dateEditBeg->setDate(QDate(QDate::currentDate().year(),1,1));
@@ -214,9 +216,26 @@ void FormPart::refreshCont(int ind)
     modelMech->setDefaultValue("id_part",id_part);
     modelMech->select();
 
+    QUrl url = QUrl(RestConnection::instance()->getUrl()+"/api/elrtr/stat/"+QString::number(id_part));
+    queue.enqueue(url);
+    if (!isProcessing) {
+        processNextRequest();
+    }
+
+}
+
+void FormPart::processNextRequest()
+{
+    if (queue.isEmpty()) {
+        isProcessing = false;
+        return;
+    }
+
     clearStat();
 
-    QUrl url = QUrl(RestConnection::instance()->getUrl()+"/api/elrtr/stat/"+QString::number(id_part));
+    isProcessing = true;
+    QUrl url = queue.dequeue();
+
     QNetworkRequest request(url);
     request.setRawHeader("Accept-Charset", "UTF-8");
     request.setRawHeader("User-Agent", "Appszsm");
@@ -305,7 +324,6 @@ void FormPart::updStat()
             QMessageBox::critical(nullptr,tr("Ошибка"),reply->errorString()+"\n"+data,QMessageBox::Cancel);
         } else {
             const QJsonDocument doc = QJsonDocument::fromJson(data);
-            //QSignalBlocker b(manager);
             for (const QJsonValue &val : doc.array()){
                 QJsonArray rows = val.toObject().value("rows").toArray();
                 if (!rows.size()){
@@ -344,6 +362,7 @@ void FormPart::updStat()
         }
         reply->deleteLater();
     }
+    processNextRequest();
 }
 
 

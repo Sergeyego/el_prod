@@ -4,6 +4,7 @@
 #include <QAbstractTableModel>
 #include <QObject>
 #include <QNetworkAccessManager>
+#include <QQueue>
 #include <QJsonArray>
 #include <QUrlQuery>
 #include "rest/restconnection.h"
@@ -32,11 +33,14 @@ signals:
 private:
     QString _name;
     QNetworkAccessManager *manager;
+    QQueue<QUrl> queue;
+    bool isProcessing;
     QVector<QVector<QVariant>> _data;
     bool _is_limited;
     QString _path;
 
 private slots:
+    void processNextRequest();
     void onResult(QNetworkReply *reply);
 };
 
