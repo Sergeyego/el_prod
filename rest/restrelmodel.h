@@ -8,7 +8,6 @@
 #include <QJsonArray>
 #include <QUrlQuery>
 #include "rest/restconnection.h"
-#include "rest/httpsyncmanager.h"
 
 class RestRelModel : public QAbstractTableModel
 {
@@ -32,7 +31,6 @@ signals:
 
 private:
     QString _name;
-    QNetworkAccessManager *manager;
     QQueue<QUrl> queue;
     bool isProcessing;
     QVector<QVector<QVariant>> _data;
@@ -41,7 +39,7 @@ private:
 
 private slots:
     void processNextRequest();
-    void onResult(QNetworkReply *reply);
+    void onResult();
 };
 
 #endif // RESTRELMODEL_H

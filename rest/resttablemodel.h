@@ -6,7 +6,6 @@
 #include <QColor>
 #include <QJsonArray>
 #include <QQueue>
-#include "rest/httpsyncmanager.h"
 #include "rest/restrelmodel.h"
 
 struct colVal {
@@ -106,10 +105,9 @@ public slots:
 
 private slots:
     void processNextRequest();
-    void onResult(QNetworkReply *reply);
+    void onResult();
 
 private:
-    QNetworkAccessManager *manager;
     QQueue<QUrl> queue;
     bool isProcessing;
     DataEditor *editor;

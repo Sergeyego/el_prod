@@ -2,9 +2,7 @@
 
 RestRoTableModel::RestRoTableModel(QObject *parent) : QAbstractTableModel{parent}
 {
-    manager = new QNetworkAccessManager(this);
     isProcessing=false;
-    connect(manager,SIGNAL(finished(QNetworkReply*)),this,SLOT(onResult(QNetworkReply*)));
 }
 
 QVariant RestRoTableModel::data(const QModelIndex &index, int role) const
@@ -189,17 +187,17 @@ void RestRoTableModel::processNextRequest()
     isProcessing = true;
     QUrl url = queue.dequeue();
 
-    QNetworkRequest request(url);
-    request.setRawHeader("Accept-Charset", "UTF-8");
-    request.setRawHeader("User-Agent", "Appszsm");
-    request.setRawHeader("Authorization", "Bearer "+RestConnection::instance()->getToken().toUtf8());
-    QNetworkReply *reply = manager->get(request);
-    reply->ignoreSslErrors();
+    QNetworkReply *reply = RestConnection::instance()->sendGet(url);
+    connect(reply,SIGNAL(finished()),this,SLOT(onResult()));
     emit sigStartRefresh();
 }
 
-void RestRoTableModel::onResult(QNetworkReply *reply)
+void RestRoTableModel::onResult()
 {
+    QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
+    if (!reply){
+        return;
+    }
     if (reply->error()){
         beginResetModel();
         _columns.clear();

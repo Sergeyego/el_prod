@@ -33,7 +33,7 @@ private:
     RestTableModel *modelChem;
     RestTableModel *modelMech;
     RestMapper *mapper;
-    QNetworkAccessManager *manager;
+
     QQueue<QUrl> queue;
     bool isProcessing;
 

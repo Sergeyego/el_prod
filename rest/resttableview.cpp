@@ -239,7 +239,7 @@ bool RestTableView::createXlsx(QByteArray &xlsx)
         obj.insert("columns",arrColumn);
         obj.insert("rows",arrRow);
         doc.setObject(obj);
-        ok = HttpSyncManager::sendRequest("api/xlsx/create","POST",doc.toJson(),xlsx,"application/json");
+        ok = RestConnection::instance()->sendSyncRequest("api/xlsx/create","POST",doc.toJson(),xlsx,"application/json");
     }
     return ok;
 }

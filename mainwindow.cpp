@@ -54,7 +54,7 @@ void MainWindow::saveSettings()
 void MainWindow::loadAnalytics()
 {
     QByteArray data;
-    bool ok = HttpSyncManager::sendGet("api/olap/prog/"+QApplication::applicationName(),data);
+    bool ok = RestConnection::instance()->sendSyncGet("api/olap/prog/"+QApplication::applicationName(),data);
     if (ok){
         QJsonDocument doc = QJsonDocument::fromJson(data);
         const QJsonArray arr=doc.array();

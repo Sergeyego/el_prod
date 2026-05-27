@@ -2,13 +2,11 @@
 
 RestTableModel::RestTableModel(QString name, QObject *parent) : QAbstractTableModel(parent), _rname(name)
 {
-    manager = new QNetworkAccessManager(this);
     isProcessing=false;
     _path = "api/autorest/tables/"+_rname;
     block=false;
     insertable=true;
     editor = new DataEditor(&modelData,this);
-    connect(manager,SIGNAL(finished(QNetworkReply*)),this,SLOT(onResult(QNetworkReply*)));
     loadInfo();
 }
 
@@ -165,7 +163,7 @@ bool RestTableModel::refreshRow(int row)
     doc.setObject(obj);
     QByteArray body = doc.toJson();
     QByteArray data;
-    bool ok = HttpSyncManager::sendRequest(_path,"PUT",body,data,"application/json");
+    bool ok = RestConnection::instance()->sendSyncRequest(_path,"PUT",body,data);
     QJsonDocument rowdoc = QJsonDocument::fromJson(data);
     const QJsonArray rows = rowdoc.array();
     if (ok && rows.size()){
@@ -333,16 +331,16 @@ void RestTableModel::processNextRequest()
     isProcessing = true;
     QUrl url = queue.dequeue();
 
-    QNetworkRequest request(url);
-    request.setRawHeader("Accept-Charset", "UTF-8");
-    request.setRawHeader("User-Agent", "Appszsm");
-    request.setRawHeader("Authorization", "Bearer "+RestConnection::instance()->getToken().toUtf8());
-    QNetworkReply *reply = manager->get(request);
-    reply->ignoreSslErrors();
+    QNetworkReply *reply = RestConnection::instance()->sendGet(url);
+    connect(reply,SIGNAL(finished()),this,SLOT(onResult()));
 }
 
-void RestTableModel::onResult(QNetworkReply *reply)
+void RestTableModel::onResult()
 {
+    QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
+    if (!reply){
+        return;
+    }
     if (reply->error()){
         beginResetModel();
         editor->revert();
@@ -416,7 +414,7 @@ bool RestTableModel::submitRow()
 void RestTableModel::loadInfo()
 {
     QByteArray data;
-    bool ok = HttpSyncManager::sendGet("api/autorest/tableinfo/"+_rname,data);
+    bool ok = RestConnection::instance()->sendSyncGet("api/autorest/tableinfo/"+_rname,data);
     if (ok){
         QJsonDocument doc = QJsonDocument::fromJson(data);
         _tablename=doc.object().value("tablename").toString();
@@ -448,7 +446,7 @@ bool RestTableModel::apiInsert()
     QByteArray body = doc.toJson();
     QByteArray data;
     //qDebug()<<body;
-    bool ok = HttpSyncManager::sendRequest(_path,"POST",body,data,"application/json");
+    bool ok = RestConnection::instance()->sendSyncRequest(_path,"POST",body,data);
     QJsonDocument rowdoc = QJsonDocument::fromJson(data);
     const QJsonArray rows = rowdoc.array();
     if (ok && rows.size()){
@@ -466,7 +464,7 @@ bool RestTableModel::apiUpdate()
     doc.setObject(obj);
     QByteArray body = doc.toJson();
     QByteArray data;
-    bool ok = HttpSyncManager::sendRequest(_path,"PUT",body,data,"application/json");
+    bool ok = RestConnection::instance()->sendSyncRequest(_path,"PUT",body,data);
     QJsonDocument rowdoc = QJsonDocument::fromJson(data);
     const QJsonArray rows = rowdoc.array();
     if (ok && rows.size()){
@@ -486,7 +484,7 @@ bool RestTableModel::apiDelete(int row)
         }
     }
     QByteArray body, data;
-    bool ok = HttpSyncManager::sendRequest(_path+"?"+query.toString(),"DELETE",body,data);
+    bool ok = RestConnection::instance()->sendSyncRequest(_path+"?"+query.toString(),"DELETE",body,data);
     return ok;
 }
 
@@ -608,7 +606,7 @@ QString RestTableModel::formatVal(const QVariant &val, int column) const
         QByteArray data;
         QUrlQuery query;
         query.addQueryItem("key",val.toString());
-        bool ok = HttpSyncManager::sendGet("api/autorest/relations/"+columnInfo(column).relnam+"?"+query.toString(),data);
+        bool ok = RestConnection::instance()->sendSyncGet("api/autorest/relations/"+columnInfo(column).relnam+"?"+query.toString(),data);
         if (ok){
             QJsonDocument doc = QJsonDocument::fromJson(data);
             const QJsonArray arr=doc.array();

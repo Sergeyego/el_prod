@@ -14,7 +14,7 @@ CubeWidget::CubeWidget(int id_cube, QWidget *parent) :
     QStringList axes;
     int dec=3;
     QByteArray data;
-    bool ok = HttpSyncManager::sendGet("api/olap/info/"+QString::number(id_cube),data);
+    bool ok = RestConnection::instance()->sendSyncGet("api/olap/info/"+QString::number(id_cube),data);
     if (ok) {
         QJsonDocument doc = QJsonDocument::fromJson(data);
         const QJsonObject obj=doc.object();
@@ -122,7 +122,7 @@ void CubeWidget::updQuery()
     QJsonDocument bodyDoc;
     bodyDoc.setObject(obj);
     body=bodyDoc.toJson();
-    bool ok = HttpSyncManager::sendRequest("api/olap/data","POST",body,data,"application/json");
+    bool ok = RestConnection::instance()->sendSyncRequest("api/olap/data","POST",body,data);
     if (ok) {
         QJsonDocument doc = QJsonDocument::fromJson(data);
         quModel->setModelData(doc.object());

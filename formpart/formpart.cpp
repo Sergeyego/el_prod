@@ -7,14 +7,18 @@ FormPart::FormPart(QWidget *parent) :
 {
     ui->setupUi(this);
 
+    QFont smallFont=QApplication::font();
+    smallFont.setPointSize(smallFont.pointSize()-1);
+    ui->tableViewGlassData->setFont(smallFont);
+    ui->tableViewGlassPar->setFont(smallFont);
+    ui->scrollArea->setFont(smallFont);
+
     isProcessing=false;
 
     loadSettings();
 
     ui->dateEditBeg->setDate(QDate(QDate::currentDate().year(),1,1));
     ui->dateEditEnd->setDate(QDate(QDate::currentDate().year(),12,31));
-
-    manager = new QNetworkAccessManager(this);
 
     ui->comboBoxOnly->setModel(RelModels::instance()->getModel("mark"));
     ui->comboBoxChemDev->setModel(RelModels::instance()->getModel("chem_dev"));
@@ -236,12 +240,7 @@ void FormPart::processNextRequest()
     isProcessing = true;
     QUrl url = queue.dequeue();
 
-    QNetworkRequest request(url);
-    request.setRawHeader("Accept-Charset", "UTF-8");
-    request.setRawHeader("User-Agent", "Appszsm");
-    request.setRawHeader("Authorization", "Bearer "+RestConnection::instance()->getToken().toUtf8());
-    QNetworkReply *reply = manager->get(request);
-    reply->ignoreSslErrors();
+    QNetworkReply *reply = RestConnection::instance()->sendGet(url);
     connect(reply,SIGNAL(finished()),this,SLOT(updStat()));
 }
 
@@ -330,6 +329,8 @@ void FormPart::updStat()
                     continue;
                 }
                 QGroupBox *box = new QGroupBox(this);
+                ui->scrollAreaWidgetContents->layout()->addWidget(box);
+
                 box->setTitle(val.toObject().value("title").toString());
                 RestTableView *view = new RestTableView(box);
                 box->setLayout(new QVBoxLayout(box));
@@ -341,8 +342,6 @@ void FormPart::updStat()
 
                 box->setFlat(true);
                 box->layout()->setContentsMargins(2,8,2,2);
-
-                ui->scrollAreaWidgetContents->layout()->addWidget(box);
 
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 11, 0))
                 int tw=5+box->fontMetrics().horizontalAdvance(box->title());

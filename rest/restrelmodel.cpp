@@ -6,14 +6,11 @@ RestRelModel::RestRelModel(QString name, QObject *parent) : QAbstractTableModel(
     _is_limited=false;
     _path="api/autorest/relations/"+_name;
     QByteArray data;
-    bool ok = HttpSyncManager::sendGet("api/autorest/relinfo/"+_name,data);
+    bool ok = RestConnection::instance()->sendSyncGet("api/autorest/relinfo/"+_name,data);
     if (ok){
         QJsonDocument doc = QJsonDocument::fromJson(data);
         _is_limited = !doc.object().value("lim").isNull();
     }
-    //qDebug()<<_name<<_is_limited;
-    manager = new QNetworkAccessManager(this);
-    connect(manager,SIGNAL(finished(QNetworkReply*)),this,SLOT(onResult(QNetworkReply*)));
 }
 
 QVariant RestRelModel::data(const QModelIndex &index, int role) const
@@ -89,17 +86,17 @@ void RestRelModel::processNextRequest()
     QUrlQuery query(url);
     QString pattern = query.queryItemValue("like");
 
-    QNetworkRequest request(url);
-    request.setRawHeader("Accept-Charset", "UTF-8");
-    request.setRawHeader("User-Agent", "Appszsm");
-    request.setRawHeader("Authorization", "Bearer "+RestConnection::instance()->getToken().toUtf8());
-    QNetworkReply *reply = manager->get(request);
-    reply->ignoreSslErrors();
+    QNetworkReply *reply = RestConnection::instance()->sendGet(url);
     reply->setProperty("pattern",pattern);
+    connect(reply,SIGNAL(finished()),this,SLOT(onResult()));
 }
 
-void RestRelModel::onResult(QNetworkReply *reply)
+void RestRelModel::onResult()
 {
+    QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
+    if (!reply){
+        return;
+    }
     if (reply->error()){
         QMessageBox::critical(nullptr,tr("Ошибка"),reply->errorString()+"\n"+reply->readAll(),QMessageBox::Cancel);
     } else {

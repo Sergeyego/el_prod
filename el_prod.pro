@@ -12,7 +12,6 @@ SOURCES += \
     main.cpp \
     mainwindow.cpp \
     progressreportdialog/progressreportdialog.cpp \
-    rest/httpsyncmanager.cpp \
     rest/relmodels.cpp \
     rest/restcombobox.cpp \
     rest/restconnection.cpp \
@@ -37,7 +36,6 @@ HEADERS += \
     formreport/formreport.h \
     mainwindow.h \
     progressreportdialog/progressreportdialog.h \
-    rest/httpsyncmanager.h \
     rest/relmodels.h \
     rest/restcombobox.h \
     rest/restconnection.h \

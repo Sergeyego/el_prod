@@ -4,7 +4,6 @@
 #include <QMainWindow>
 #include <QAction>
 #include <QDir>
-#include "rest/httpsyncmanager.h"
 #include "rest/resttablemodel.h"
 #include "rest/restrelmodel.h"
 #include "rest/relmodels.h"

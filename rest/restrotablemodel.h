@@ -28,7 +28,7 @@ public slots:
 
 private slots:
     void processNextRequest();
-    void onResult(QNetworkReply *reply);
+    void onResult();
 
 private:
     QVector<QVector<cellData>> modelData;
@@ -36,7 +36,6 @@ private:
     QString _path;
     QString _title;
     QStringList _columns;
-    QNetworkAccessManager *manager;
     QQueue<QUrl> queue;
     bool isProcessing;
 
