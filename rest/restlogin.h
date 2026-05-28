@@ -3,7 +3,6 @@
 
 #include <QDialog>
 #include <QMessageBox>
-#include <QNetworkAccessManager>
 #include <QUrl>
 #include <QNetworkReply>
 #include <QJsonDocument>
@@ -24,12 +23,11 @@ public:
 
 private:
     Ui::RestLogin *ui;
-    QNetworkAccessManager *manager;
     QString currentUrl();
 
 private slots:
     void restconnect();
-    void onResult(QNetworkReply *reply);
+    void onResult();
 };
 
 #endif // RESTLOGIN_H

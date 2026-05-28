@@ -144,6 +144,30 @@ void FormPart::saveSettings()
     settings.setValue("part_tab_index",ui->tabWidget->currentIndex());
 }
 
+void FormPart::refreshRels()
+{
+    QVector<RestTableModel*> arrMod;
+    arrMod.push_back(modelGlass);
+    arrMod.push_back(modelZam);
+    arrMod.push_back(modelZamBreak);
+    arrMod.push_back(modelRab);
+    arrMod.push_back(modelChem);
+    arrMod.push_back(modelMech);
+    arrMod.push_back(modelPart);
+    QSet<QString> relSet;
+    for (RestTableModel *model : arrMod){
+        for (int i=0; i<model->columnCount(); i++){
+            QString rel = model->columnInfo(i).relnam;
+            if (!rel.isEmpty()){
+                relSet.insert(rel);
+            }
+        }
+    }
+    for (const QString &rel : relSet){
+        RelModels::instance()->getModel(rel)->refresh();
+    }
+}
+
 void FormPart::selectGlass()
 {
     ui->tableViewGlass->setCurrentIndex(ui->tableViewGlass->model()->index(0,2));
@@ -176,9 +200,9 @@ void FormPart::updPart()
         }
         id_el=ui->comboBoxOnly->getCurrentData().val.toInt();
     }
-    /*if (sender()==ui->pushButtonUpd){
-        modelPart->refreshRelsModel();
-    }*/
+    if (sender()==ui->pushButtonUpd){
+        refreshRels();
+    }
     QString filter=modelPart->tableName()+".dat_part between '"+ui->dateEditBeg->date().toString("yyyy-MM-dd")+"' and '"+ui->dateEditEnd->date().toString("yyyy-MM-dd")+"'";
     if (id_el>0){
         filter+=" and "+modelPart->tableName()+".id_el="+QString::number(id_el);
@@ -278,18 +302,38 @@ void FormPart::loadChem()
 
 void FormPart::insertChemSamp()
 {
-    /*QList<int> ids;
+    int id_part = mapper->modelData(mapper->currentIndex(),"id").toInt();
     int id_dev=ui->comboBoxChemDev->getCurrentData().val.toInt();
-    QList <int> l = modelChem->ids();
-    foreach (int key,l){
-        int id=modelChem->addChem(key,0.0,id_dev);
-        ids.push_back(id);
+
+    QByteArray data;
+    bool ok = RestConnection::instance()->sendSyncRequest("api/elrtr/chem/load/"+QString::number(id_part)+"/"+QString::number(id_dev),"POST",data,data);
+    if (ok){
+        RestTableDialog d(modelChem->tableInfoName());
+        QString filter=d.model->tableName()+".id_part = "+QString::number(id_part);
+
+        QJsonDocument doc=QJsonDocument::fromJson(data);
+        const QJsonArray arr=doc.array();
+        if (arr.size()){
+            QString dop;
+            for (const QJsonValue &val : arr){
+                if (!dop.isEmpty()){
+                    dop+=", ";
+                }
+                dop+=QString::number(val.toObject().value("id").toInt());
+            }
+            dop=" and "+d.model->tableName()+".id in ("+dop+")";
+            filter+=dop;
+        }
+
+        d.model->setPath(modelChem->path());
+        d.model->setFilter(filter);
+        d.model->setDefaultValue("id_part",id_part);
+        d.model->setDefaultValue("id_dev",id_dev);
+        d.model->select();
+        d.exec();
+        modelChem->select();
+        modelPart->refreshRow(mapper->currentIndex());
     }
-    DialogTmp dt;
-    dt.load(mapper->modelData(mapper->currentIndex(),0).toInt(),id_dev,ids);
-    dt.exec();
-    modelChem->select();
-    modelPart->refreshState();*/
 }
 
 void FormPart::refreshGlassData(QModelIndex index)
@@ -372,18 +416,63 @@ void FormPart::updStat()
     processNextRequest();
 }
 
-
 void FormPart::insertMark()
 {
-
+    int id_rcp=ui->comboBoxRcp->getCurrentData().val.toInt();
+    if (modelPart->isAdd() && id_rcp>0){
+        QByteArray data;
+        bool ok = RestConnection::instance()->sendSyncGet("api/elrtr/parti/insmark/"+QString::number(id_rcp),data);
+        if (ok){
+            QJsonDocument doc=QJsonDocument::fromJson(data);
+            const QJsonArray arr=doc.array();
+            if (arr.size()){
+                int id=arr.at(0).toObject().value("id_el").toInt();
+                colVal id_el;
+                id_el.val=id;
+                ui->comboBoxMark->setCurrentData(id_el);
+            }
+        }
+    }
 }
 
 void FormPart::insertProvol()
 {
-
+    int id_el=ui->comboBoxMark->getCurrentData().val.toInt();
+    if (modelPart->isAdd() && id_el>0){
+        QByteArray data;
+        bool ok = RestConnection::instance()->sendSyncGet("api/elrtr/parti/insprovol/"+QString::number(id_el),data);
+        if (ok){
+            QJsonDocument doc=QJsonDocument::fromJson(data);
+            const QJsonArray arr=doc.array();
+            if (arr.size()){
+                int id=arr.at(0).toObject().value("id_pr").toInt();
+                colVal id_pr;
+                id_pr.val=id;
+                ui->comboBoxWire->setCurrentData(id_pr);
+            }
+        }
+    }
 }
 
 void FormPart::insertPack()
 {
-
+    int id_el=ui->comboBoxMark->getCurrentData().val.toInt();
+    double diam = ui->lineEditDiam->text().toDouble();
+    if (modelPart->isAdd() && id_el>0 && diam>0){
+        QByteArray data;
+        bool ok = RestConnection::instance()->sendSyncGet("api/elrtr/parti/inspack/"+QString::number(id_el)+"/"+QString::number(diam),data);
+        if (ok){
+            QJsonDocument doc=QJsonDocument::fromJson(data);
+            const QJsonArray arr=doc.array();
+            if (arr.size()){
+                colVal id_pack, id_long, id_var;
+                id_pack.val=arr.at(0).toObject().value("id_pack").toInt();
+                id_long.val=arr.at(0).toObject().value("id_long").toInt();
+                id_var.val=arr.at(0).toObject().value("id_var").toInt();
+                ui->comboBoxPack->setCurrentData(id_pack);
+                ui->comboBoxLen->setCurrentData(id_long);
+                ui->comboBoxVar->setCurrentData(id_var);
+            }
+        }
+    }
 }

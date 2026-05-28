@@ -11,11 +11,8 @@ RestLogin::RestLogin(const QString title, QWidget *parent) :
     ui->edtPort->setValue(9000);
     ui->groupBox->setVisible(false);
 
-    manager = new QNetworkAccessManager(this);
-
     connect(ui->cmdShowOpt,SIGNAL(clicked(bool)),ui->groupBox,SLOT(setVisible(bool)));
     connect(ui->cmdConnect,SIGNAL(clicked()),this,SLOT(restconnect()));
-    connect(manager,SIGNAL(finished(QNetworkReply*)),this,SLOT(onResult(QNetworkReply*)));
 }
 
 RestLogin::~RestLogin()
@@ -37,18 +34,18 @@ void RestLogin::restconnect()
             {"password", ui->edtPasswd->text()}
         };
     doc.setObject(object);
-    QNetworkRequest request(QUrl(currentUrl()+"/login"));
-    request.setRawHeader("Accept-Charset", "UTF-8");
-    request.setRawHeader("User-Agent", "Appszsm");
-    request.setRawHeader("Content-Type", "application/json");
-    QByteArray data=doc.toJson();
-    QNetworkReply *reply = manager->post(request,data);
-    reply->ignoreSslErrors();
+    QByteArray body=doc.toJson();
+    QNetworkReply *reply = RestConnection::instance()->sendRequest(QUrl(currentUrl()+"/login"),"POST",body);
+    connect(reply,SIGNAL(finished()),this,SLOT(onResult()));
 }
 
-void RestLogin::onResult(QNetworkReply *reply)
+void RestLogin::onResult()
 {
-    if (reply->error()){
+    QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
+    if (!reply){
+        return;
+    }
+    if (reply->error()!=QNetworkReply::NoError){
         QMessageBox::critical(nullptr,tr("Ошибка"),reply->errorString()+"\n"+reply->readAll(),QMessageBox::Cancel);
     } else {
         QJsonDocument doc = QJsonDocument::fromJson(reply->readAll());

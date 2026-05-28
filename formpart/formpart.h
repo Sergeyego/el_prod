@@ -8,6 +8,7 @@
 #include "rest/resttablemodel.h"
 #include "rest/restmapper.h"
 #include "rest/restrotablemodel.h"
+#include "rest/resttabledialog.h"
 #include "dialogloadchem/dialogloadchem.h"
 
 namespace Ui {
@@ -42,6 +43,7 @@ private:
     void saveSettings();
 
 private slots:
+    void refreshRels();
     void selectGlass();
     void setDefaultValue();
     void updPart();

@@ -272,9 +272,24 @@ QString RestTableModel::tableName() const
     return _tablename;
 }
 
+QString RestTableModel::tableInfoName() const
+{
+    return _rname;
+}
+
 colInfo RestTableModel::columnInfo(int col) const
 {
     return (col>=0 && col<columnCount()) ? colMap.value(_columns.at(col)) : colInfo();
+}
+
+QString RestTableModel::path() const
+{
+    return _path;
+}
+
+QVariant RestTableModel::getModelData(int row, QString col) const
+{
+    return this->data(this->index(row,_columns.indexOf(col)),Qt::EditRole);
 }
 
 bool RestTableModel::isColumnRel(int col) const
@@ -382,7 +397,6 @@ void RestTableModel::onResult()
     reply->deleteLater();
     processNextRequest();
 }
-
 
 void RestTableModel::revert()
 {

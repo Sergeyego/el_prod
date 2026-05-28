@@ -16,9 +16,9 @@ public:
     void setUrl(const QString &u);
     void setToken(const QString &t, const QString &user, const qint64 &from, const qint64 &to);
     QString getUrl() const;
-    QString getToken() const;
+    QString getToken();
     QString getUser() const;
-    QNetworkReply* sendRequest(QUrl &url, QString req, const QByteArray &body, QString content_type="application/json");
+    QNetworkReply* sendRequest(QUrl url, QString req, const QByteArray &body, QString content_type="application/json");
     QNetworkReply* sendGet(QUrl &url);
     bool sendSyncRequest(QString path, QString req, const QByteArray &body, QByteArray &respData, QString content_type = "application/json");
     bool sendSyncGet(QString path, QByteArray &data);

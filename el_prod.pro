@@ -22,6 +22,7 @@ SOURCES += \
     rest/restmapper.cpp \
     rest/restrelmodel.cpp \
     rest/restrotablemodel.cpp \
+    rest/resttabledialog.cpp \
     rest/resttablemodel.cpp \
     rest/resttableview.cpp \
     rest_olap/axiswidget.cpp \
@@ -47,6 +48,7 @@ HEADERS += \
     rest/restmapper.h \
     rest/restrelmodel.h \
     rest/restrotablemodel.h \
+    rest/resttabledialog.h \
     rest/resttablemodel.h \
     rest/resttableview.h \
     rest_olap/axiswidget.h \
@@ -64,6 +66,7 @@ FORMS += \
     mainwindow.ui \
     progressreportdialog/progressreportdialog.ui \
     rest/restlogin.ui \
+    rest/resttabledialog.ui \
     rest_olap/axiswidget.ui \
     rest_olap/cubewidget.ui \
     rest_olap/dialogolapflt.ui \

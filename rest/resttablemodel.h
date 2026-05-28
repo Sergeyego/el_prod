@@ -86,7 +86,10 @@ public:
     bool setHeaderData(int section, Qt::Orientation orientation, const QVariant &value, int role=Qt::EditRole);
     QMetaType::Type columnType(int col) const;
     QString tableName() const;
+    QString tableInfoName() const;
     colInfo columnInfo(int col) const;
+    QString path() const;
+    QVariant getModelData(int row, QString col) const;
     bool isColumnRel(int col) const;
     bool isAdd() const;
     bool isEdt() const;

@@ -33,12 +33,13 @@ QString RestConnection::getUrl() const
     return _url;
 }
 
-QString RestConnection::getToken() const
+QString RestConnection::getToken()
 {
     if (iat && exp){
         qint64 current_time=QDateTime::currentSecsSinceEpoch();
         qint64 dt=(exp-iat)*0.92;
         if (current_time>(local_iat+dt)){
+            token="";
             RestLogin l(tr("Пожалуйста, авторизуйтесь"));
             if (l.exec()!=QDialog::Accepted){
                 QApplication::exit();
@@ -53,12 +54,14 @@ QString RestConnection::getUser() const
     return currentUser;
 }
 
-QNetworkReply *RestConnection::sendRequest(QUrl &url, QString req, const QByteArray &body, QString content_type)
+QNetworkReply *RestConnection::sendRequest(QUrl url, QString req, const QByteArray &body, QString content_type)
 {
     QNetworkRequest request(url);
     request.setRawHeader("Accept-Charset", "UTF-8");
     request.setRawHeader("User-Agent", "Appszsm");
-    request.setRawHeader("Authorization", "Bearer "+this->getToken().toUtf8());
+    if (!token.isEmpty()){
+        request.setRawHeader("Authorization", "Bearer "+this->getToken().toUtf8());
+    }
     if (!content_type.isEmpty() && req!="GET"){
         request.setRawHeader("Content-Type", content_type.toUtf8());
     }
