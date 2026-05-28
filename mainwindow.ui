@@ -43,7 +43,7 @@
     <property name="title">
      <string>Операции</string>
     </property>
-    <addaction name="action"/>
+    <addaction name="actionPack"/>
    </widget>
    <widget class="QMenu" name="menu_3">
     <property name="title">
@@ -72,7 +72,7 @@
     <string>Отчет за период</string>
    </property>
   </action>
-  <action name="action">
+  <action name="actionPack">
    <property name="text">
     <string>Упаковка</string>
    </property>

@@ -385,7 +385,7 @@ void RestTableModel::onResult()
     if (!reply){
         return;
     }
-    if (reply->error()){
+    if (reply->error()!=QNetworkReply::NoError){
         this->clear();
         QMessageBox::critical(nullptr,tr("Ошибка"),reply->errorString()+"\n"+reply->readAll(),QMessageBox::Cancel);
     } else {

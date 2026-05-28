@@ -198,7 +198,7 @@ void RestRoTableModel::onResult()
     if (!reply){
         return;
     }
-    if (reply->error()){
+    if (reply->error()!=QNetworkReply::NoError){
         beginResetModel();
         _columns.clear();
         colMap.clear();

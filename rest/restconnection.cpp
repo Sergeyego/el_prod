@@ -81,7 +81,7 @@ QNetworkReply *RestConnection::sendRequest(QUrl url, QString req, const QByteArr
     return reply;
 }
 
-QNetworkReply *RestConnection::sendGet(QUrl &url)
+QNetworkReply *RestConnection::sendGet(QUrl url)
 {
     QByteArray body;
     return sendRequest(url,"GET",body);

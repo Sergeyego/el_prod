@@ -11,6 +11,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     actAction(ui->actionPart,&MainWindow::newFormPart);
     actAction(ui->actionReport,&MainWindow::newFormReport);
+    actAction(ui->actionPack,&MainWindow::newFormPack);
 
     loadAnalytics();
 
@@ -90,5 +91,12 @@ void MainWindow::newAnalytics()
         if (!tabManager->exist(sender()) && id>0){
             tabManager->addSubWindow(new CubeWidget(id),sender());
         }
+    }
+}
+
+void MainWindow::newFormPack()
+{
+    if (!tabManager->exist(sender())){
+        tabManager->addSubWindow(new FormPack(),sender());
     }
 }

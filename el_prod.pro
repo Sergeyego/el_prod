@@ -1,4 +1,4 @@
-QT += widgets network
+QT += widgets network printsupport
 
 CONFIG += c++17
 
@@ -8,8 +8,11 @@ CONFIG += c++17
 
 SOURCES += \
     dialogloadchem/dialogloadchem.cpp \
+    dialogpackload/dialogpackload.cpp \
+    formpack/formpack.cpp \
     formpart/formpart.cpp \
     formreport/formreport.cpp \
+    invoicemanager.cpp \
     main.cpp \
     mainwindow.cpp \
     progressreportdialog/progressreportdialog.cpp \
@@ -35,8 +38,11 @@ SOURCES += \
 
 HEADERS += \
     dialogloadchem/dialogloadchem.h \
+    dialogpackload/dialogpackload.h \
+    formpack/formpack.h \
     formpart/formpart.h \
     formreport/formreport.h \
+    invoicemanager.h \
     mainwindow.h \
     progressreportdialog/progressreportdialog.h \
     rest/relmodels.h \
@@ -61,6 +67,8 @@ HEADERS += \
 
 FORMS += \
     dialogloadchem/dialogloadchem.ui \
+    dialogpackload/dialogpackload.ui \
+    formpack/formpack.ui \
     formpart/formpart.ui \
     formreport/formreport.ui \
     mainwindow.ui \
