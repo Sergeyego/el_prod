@@ -14,6 +14,7 @@ MainWindow::MainWindow(QWidget *parent)
     actAction(ui->actionPack,&MainWindow::newFormPack);
     actAction(ui->actionPerePack,&MainWindow::newFormPerePack);
     actAction(ui->actionSelf,&MainWindow::newFormSelf);
+    actAction(ui->actionFix,&MainWindow::newFormFix);
 
     loadAnalytics();
 
@@ -114,5 +115,12 @@ void MainWindow::newFormSelf()
 {
     if (!tabManager->exist(sender())){
         tabManager->addSubWindow(new FormSelf(),sender());
+    }
+}
+
+void MainWindow::newFormFix()
+{
+    if (!tabManager->exist(sender())){
+        tabManager->addSubWindow(new FormFix(),sender());
     }
 }

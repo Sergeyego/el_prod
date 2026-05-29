@@ -90,7 +90,7 @@ void FormPack::refreshRels()
     arrMod.push_back(modelNakl);
     arrMod.push_back(modelPack);
     arrMod.push_back(modelBreak);
-    RelModels::instance()->updateResls(arrMod);
+    RelModels::instance()->updateRels(arrMod);
 }
 
 void FormPack::upd()

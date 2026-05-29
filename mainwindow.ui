@@ -46,6 +46,8 @@
     <addaction name="actionPack"/>
     <addaction name="actionPerePack"/>
     <addaction name="actionSelf"/>
+    <addaction name="separator"/>
+    <addaction name="actionFix"/>
    </widget>
    <widget class="QMenu" name="menu_3">
     <property name="title">
@@ -87,6 +89,11 @@
   <action name="actionSelf">
    <property name="text">
     <string>Собственное потребление</string>
+   </property>
+  </action>
+  <action name="actionFix">
+   <property name="text">
+    <string>Фиксированные остатки</string>
    </property>
   </action>
  </widget>

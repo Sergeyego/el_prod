@@ -16,7 +16,7 @@ public:
     static RelModels *instance();
     RestRelModel* getModel(QString name);
     ~RelModels();
-    void updateResls(QVector<RestTableModel*> models);
+    void updateRels(QVector<RestTableModel*> models);
 public slots:
     void updateAllRels();
 

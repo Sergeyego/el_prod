@@ -6,6 +6,7 @@
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
+    a.setWindowIcon(QIcon(":/images/ico.ico"));
     RestLogin d(QObject::tr("Производство электродов"));
     if (d.exec()!=QDialog::Accepted) {
         exit(1);

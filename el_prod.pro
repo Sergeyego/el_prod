@@ -9,6 +9,7 @@ CONFIG += c++17
 SOURCES += \
     dialogloadchem/dialogloadchem.cpp \
     dialogpackload/dialogpackload.cpp \
+    formfix/formfix.cpp \
     formpack/formpack.cpp \
     formpart/formpart.cpp \
     formperepack/formperepack.cpp \
@@ -41,6 +42,7 @@ SOURCES += \
 HEADERS += \
     dialogloadchem/dialogloadchem.h \
     dialogpackload/dialogpackload.h \
+    formfix/formfix.h \
     formpack/formpack.h \
     formpart/formpart.h \
     formperepack/formperepack.h \
@@ -72,6 +74,7 @@ HEADERS += \
 FORMS += \
     dialogloadchem/dialogloadchem.ui \
     dialogpackload/dialogpackload.ui \
+    formfix/formfix.ui \
     formpack/formpack.ui \
     formpart/formpart.ui \
     formperepack/formperepack.ui \
@@ -91,5 +94,11 @@ qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
+win32:RC_FILE = ico.rc
+macx:ICON = ico.icns
+
 RESOURCES += \
     res.qrc
+
+DISTFILES += \
+    ico.rc

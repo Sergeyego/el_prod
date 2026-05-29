@@ -30,7 +30,7 @@ RelModels::~RelModels()
     //qDebug()<<"delete rels";
 }
 
-void RelModels::updateResls(QVector<RestTableModel *> models)
+void RelModels::updateRels(QVector<RestTableModel *> models)
 {
     QSet<QString> relSet;
     for (RestTableModel *model : models){

@@ -86,7 +86,7 @@ void FormSelf::refreshRels()
     QVector<RestTableModel*> arrMod;
     arrMod.push_back(modelSelfNakl);
     arrMod.push_back(modelSelfData);
-    RelModels::instance()->updateResls(arrMod);
+    RelModels::instance()->updateRels(arrMod);
 }
 
 void FormSelf::upd()

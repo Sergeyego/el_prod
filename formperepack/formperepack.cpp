@@ -123,5 +123,5 @@ void FormPerePack::refreshRels()
     QVector<RestTableModel*> arrMod;
     arrMod.push_back(modelNakl);
     arrMod.push_back(modelPerePack);
-    RelModels::instance()->updateResls(arrMod);
+    RelModels::instance()->updateRels(arrMod);
 }

@@ -14,6 +14,7 @@
 #include "formpack/formpack.h"
 #include "formperepack/formperepack.h"
 #include "formself/formself.h"
+#include "formfix/formfix.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -42,7 +43,8 @@ private slots:
     void newFormPack();
     void newFormPerePack();
     void newFormSelf();
-    void newFormReport();    
+    void newFormReport();
+    void newFormFix();
     void newAnalytics();
 };
 #endif // MAINWINDOW_H

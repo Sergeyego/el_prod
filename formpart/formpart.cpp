@@ -154,7 +154,7 @@ void FormPart::refreshRels()
     arrMod.push_back(modelChem);
     arrMod.push_back(modelMech);
     arrMod.push_back(modelPart);
-    RelModels::instance()->updateResls(arrMod);
+    RelModels::instance()->updateRels(arrMod);
 }
 
 void FormPart::selectGlass()
