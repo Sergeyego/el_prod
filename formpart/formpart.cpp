@@ -154,18 +154,7 @@ void FormPart::refreshRels()
     arrMod.push_back(modelChem);
     arrMod.push_back(modelMech);
     arrMod.push_back(modelPart);
-    QSet<QString> relSet;
-    for (RestTableModel *model : arrMod){
-        for (int i=0; i<model->columnCount(); i++){
-            QString rel = model->columnInfo(i).relnam;
-            if (!rel.isEmpty()){
-                relSet.insert(rel);
-            }
-        }
-    }
-    for (const QString &rel : relSet){
-        RelModels::instance()->getModel(rel)->refresh();
-    }
+    RelModels::instance()->updateResls(arrMod);
 }
 
 void FormPart::selectGlass()

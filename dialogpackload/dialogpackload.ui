@@ -38,7 +38,14 @@
       </widget>
      </item>
      <item>
-      <widget class="QComboBox" name="comboBoxMaster"/>
+      <widget class="QComboBox" name="comboBoxMaster">
+       <property name="minimumSize">
+        <size>
+         <width>150</width>
+         <height>0</height>
+        </size>
+       </property>
+      </widget>
      </item>
      <item>
       <layout class="QVBoxLayout" name="verticalLayout">

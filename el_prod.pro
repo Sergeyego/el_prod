@@ -11,7 +11,9 @@ SOURCES += \
     dialogpackload/dialogpackload.cpp \
     formpack/formpack.cpp \
     formpart/formpart.cpp \
+    formperepack/formperepack.cpp \
     formreport/formreport.cpp \
+    formself/formself.cpp \
     invoicemanager.cpp \
     main.cpp \
     mainwindow.cpp \
@@ -41,7 +43,9 @@ HEADERS += \
     dialogpackload/dialogpackload.h \
     formpack/formpack.h \
     formpart/formpart.h \
+    formperepack/formperepack.h \
     formreport/formreport.h \
+    formself/formself.h \
     invoicemanager.h \
     mainwindow.h \
     progressreportdialog/progressreportdialog.h \
@@ -70,7 +74,9 @@ FORMS += \
     dialogpackload/dialogpackload.ui \
     formpack/formpack.ui \
     formpart/formpart.ui \
+    formperepack/formperepack.ui \
     formreport/formreport.ui \
+    formself/formself.ui \
     mainwindow.ui \
     progressreportdialog/progressreportdialog.ui \
     rest/restlogin.ui \

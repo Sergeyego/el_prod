@@ -1,31 +1,30 @@
-#ifndef FORMPACK_H
-#define FORMPACK_H
+#ifndef FORMSELF_H
+#define FORMSELF_H
 
 #include <QWidget>
+#include <QSettings>
 #include "rest/resttablemodel.h"
 #include "rest/restmapper.h"
 #include "invoicemanager.h"
-#include "dialogpackload/dialogpackload.h"
 
 namespace Ui {
-class FormPack;
+class FormSelf;
 }
 
-class FormPack : public QWidget
+class FormSelf : public QWidget
 {
     Q_OBJECT
 
 public:
-    explicit FormPack(QWidget *parent = nullptr);
-    ~FormPack();
+    explicit FormSelf(QWidget *parent = nullptr);
+    ~FormSelf();
 
 private:
-    Ui::FormPack *ui;
+    Ui::FormSelf *ui;
     void loadSettings();
     void saveSettings();
-    RestTableModel *modelNakl;
-    RestTableModel *modelPack;
-    RestTableModel *modelBreak;
+    RestTableModel *modelSelfNakl;
+    RestTableModel *modelSelfData;
     RestMapper *mapper;
     InvoiceManager *invManager;
 
@@ -37,7 +36,6 @@ private slots:
     void calcSum();
     void nakl();
     void naklPer();
-    void loadPack();
 };
 
-#endif // FORMPACK_H
+#endif // FORMSELF_H

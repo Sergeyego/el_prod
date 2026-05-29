@@ -177,6 +177,27 @@ void RestRoTableModel::select()
     }
 }
 
+void RestRoTableModel::selectSync()
+{
+    QByteArray data;
+    bool ok=RestConnection::instance()->sendSyncGet(_path,data);
+    if (ok){
+        QJsonDocument doc = QJsonDocument::fromJson(data);
+        setModelData(doc.object());
+    } else {
+        clear();
+    }
+}
+
+void RestRoTableModel::clear()
+{
+    beginResetModel();
+    _columns.clear();
+    colMap.clear();
+    endResetModel();
+    emit sigRefresh();
+}
+
 void RestRoTableModel::processNextRequest()
 {
     if (queue.isEmpty()) {
@@ -199,11 +220,7 @@ void RestRoTableModel::onResult()
         return;
     }
     if (reply->error()!=QNetworkReply::NoError){
-        beginResetModel();
-        _columns.clear();
-        colMap.clear();
-        endResetModel();
-        emit sigRefresh();
+        clear();
         QMessageBox::critical(nullptr,tr("Ошибка"),reply->errorString()+"\n"+reply->readAll(),QMessageBox::Cancel);
     } else {
         QJsonDocument doc = QJsonDocument::fromJson(reply->readAll());
@@ -212,3 +229,4 @@ void RestRoTableModel::onResult()
     reply->deleteLater();
     processNextRequest();
 }
+

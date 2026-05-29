@@ -18,6 +18,9 @@ void InvoiceManager::getInvoice(QString path, QString vid, QString type, QString
 void InvoiceManager::onResult()
 {
     QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
+    if (!reply){
+        return;
+    }
     if (reply->error()!=QNetworkReply::NoError){
         QMessageBox::critical(nullptr,tr("Ошибка"),reply->errorString()+"\n"+reply->readAll(),QMessageBox::Cancel);
     } else {

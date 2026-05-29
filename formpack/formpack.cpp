@@ -84,11 +84,20 @@ void FormPack::setDefaultValue()
     modelNakl->setDefaultValue("dat",QDate::currentDate().addDays(-1));
 }
 
+void FormPack::refreshRels()
+{
+    QVector<RestTableModel*> arrMod;
+    arrMod.push_back(modelNakl);
+    arrMod.push_back(modelPack);
+    arrMod.push_back(modelBreak);
+    RelModels::instance()->updateResls(arrMod);
+}
+
 void FormPack::upd()
 {
-    /*if (sender()==ui->pushButtonUpd){
-        modelPack->refreshRelsModel();
-    }*/
+    if (sender()==ui->pushButtonUpd){
+        refreshRels();
+    }
     QString begDate=ui->dateEditBeg->date().toString("yyyy-MM-dd");
     QString endDate=ui->dateEditEnd->date().toString("yyyy-MM-dd");
     int id_type=ui->comboBoxType->getCurrentData().val.toInt();
@@ -131,7 +140,7 @@ void FormPack::calcSum()
         }
     }
     QString title = ui->comboBoxType->currentText();
-    if (sum>0){
+    if (sum!=0){
         title += tr(" итого: ")+QLocale().toString(sum,'f',1)+tr(" кг");
     }
     ui->labelItogo->setText(title);

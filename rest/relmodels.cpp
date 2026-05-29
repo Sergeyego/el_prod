@@ -29,3 +29,26 @@ RelModels::~RelModels()
 {
     //qDebug()<<"delete rels";
 }
+
+void RelModels::updateResls(QVector<RestTableModel *> models)
+{
+    QSet<QString> relSet;
+    for (RestTableModel *model : models){
+        for (int i=0; i<model->columnCount(); i++){
+            QString rel = model->columnInfo(i).relnam;
+            if (!rel.isEmpty()){
+                relSet.insert(rel);
+            }
+        }
+    }
+    for (const QString &rel : relSet){
+        getModel(rel)->refresh();
+    }
+}
+
+void RelModels::updateAllRels()
+{
+    for (RestRelModel *model : map.values()){
+        model->refresh();
+    }
+}

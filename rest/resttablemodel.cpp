@@ -287,6 +287,11 @@ QString RestTableModel::path() const
     return _path;
 }
 
+QString RestTableModel::filter() const
+{
+    return _filter;
+}
+
 QVariant RestTableModel::getModelData(int row, QString col) const
 {
     return this->data(this->index(row,_columns.indexOf(col)),Qt::EditRole);

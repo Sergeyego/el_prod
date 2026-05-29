@@ -25,6 +25,8 @@ public:
 
 public slots:
     void select();
+    void selectSync();
+    void clear();
 
 private slots:
     void processNextRequest();

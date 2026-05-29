@@ -89,6 +89,7 @@ public:
     QString tableInfoName() const;
     colInfo columnInfo(int col) const;
     QString path() const;
+    QString filter() const;
     QVariant getModelData(int row, QString col) const;
     bool isColumnRel(int col) const;
     bool isAdd() const;

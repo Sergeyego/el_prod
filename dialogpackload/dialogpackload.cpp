@@ -60,19 +60,12 @@ void DialogPackLoad::setHtml(const QString &html)
 
 void DialogPackLoad::updMaster(QDate date)
 {
-    /*QSqlQuery query;
-    query.prepare("select distinct epo.id_main_rab, ke.snam "
-                  "from el_pallet_op epo "
-                  "inner join kamin_empl ke on ke.id = epo.id_main_rab "
-                  "where (epo.dtm)::date = :dt "
-                  "order by ke.snam");
-    query.bindValue(":dt",date);
-    if (modelMaster->execQuery(query)){
+    modelMaster->setPath("api/elrtr/pack/masters/"+date.toString("yyyy-MM-dd"));
+    modelMaster->selectSync();
+    if (modelMaster->rowCount()){
         ui->comboBoxMaster->setModelColumn(1);
-    }
-    if (ui->comboBoxMaster->model()->rowCount()){
         ui->comboBoxMaster->setCurrentIndex(0);
-    }*/
+    }
 }
 
 QString DialogPackLoad::currentIdMaster()
@@ -155,18 +148,10 @@ void DialogPackLoad::print()
 
 void DialogPackLoad::loadData()
 {
-    /*QSqlQuery query;
-    query.prepare("insert into parti_pack (id_nakl, id_part, kvo) ( "
-                  "select :id_nakl, epo.id_parti, sum(epo.kvo) "
-                  "from el_pallet_op epo "
-                  "where (epo.dtm)::date = :dt and epo.id_main_rab = :id_master and epo.id_src = 1 "
-                  "group by epo.id_parti)");
-    query.bindValue(":id_nakl",currentIdNakl);
-    query.bindValue(":dt",ui->dateEdit->date());
-    query.bindValue(":id_master",currentIdMaster());
-    if (query.exec()){
+    QByteArray data;
+    QString path = "api/elrtr/pack/load/"+QString::number(currentIdNakl)+"/"+ui->dateEdit->date().toString("yyyy-MM-dd")+"/"+currentIdMaster();
+    bool ok = RestConnection::instance()->sendSyncGet(path,data);
+    if (ok){
         accept();
-    } else {
-        QMessageBox::critical(this, tr("Ошибка"),query.lastError().text(),QMessageBox::Cancel);
-    }*/
+    }
 }

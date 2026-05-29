@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QApplication>
 #include "rest/restrelmodel.h"
+#include "rest/resttablemodel.h"
 
 class RelModels : public QObject
 {
@@ -15,6 +16,9 @@ public:
     static RelModels *instance();
     RestRelModel* getModel(QString name);
     ~RelModels();
+    void updateResls(QVector<RestTableModel*> models);
+public slots:
+    void updateAllRels();
 
 private:
     static RelModels *relModels_instance;

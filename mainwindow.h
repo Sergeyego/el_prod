@@ -12,6 +12,8 @@
 #include "formreport/formreport.h"
 #include "rest_olap/cubewidget.h"
 #include "formpack/formpack.h"
+#include "formperepack/formperepack.h"
+#include "formself/formself.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -38,6 +40,8 @@ private:
 private slots:
     void newFormPart();
     void newFormPack();
+    void newFormPerePack();
+    void newFormSelf();
     void newFormReport();    
     void newAnalytics();
 };

@@ -44,6 +44,8 @@
      <string>Операции</string>
     </property>
     <addaction name="actionPack"/>
+    <addaction name="actionPerePack"/>
+    <addaction name="actionSelf"/>
    </widget>
    <widget class="QMenu" name="menu_3">
     <property name="title">
@@ -75,6 +77,16 @@
   <action name="actionPack">
    <property name="text">
     <string>Упаковка</string>
+   </property>
+  </action>
+  <action name="actionPerePack">
+   <property name="text">
+    <string>Переупаковка</string>
+   </property>
+  </action>
+  <action name="actionSelf">
+   <property name="text">
+    <string>Собственное потребление</string>
    </property>
   </action>
  </widget>
