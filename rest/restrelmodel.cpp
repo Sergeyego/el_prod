@@ -4,12 +4,14 @@ RestRelModel::RestRelModel(QString name, QObject *parent) : QAbstractTableModel(
 {
     isProcessing=false;
     _is_limited=false;
+    _editable=false;
     _path="api/autorest/relations/"+_name;
     QByteArray data;
     bool ok = RestConnection::instance()->sendSyncGet("api/autorest/relinfo/"+_name,data);
     if (ok){
         QJsonDocument doc = QJsonDocument::fromJson(data);
         _is_limited = !doc.object().value("lim").isNull();
+        _editor = doc.object().value("editor").toString();
     }
 }
 
@@ -39,6 +41,11 @@ QString RestRelModel::getName() const
     return _name;
 }
 
+QString RestRelModel::editor() const
+{
+    return _editor;
+}
+
 bool RestRelModel::isLimited()
 {
     return _is_limited;
@@ -47,6 +54,16 @@ bool RestRelModel::isLimited()
 void RestRelModel::setPath(QString p)
 {
     _path=p;
+}
+
+bool RestRelModel::isEditable()
+{
+    return _editable && !_editor.isEmpty();
+}
+
+void RestRelModel::setEditable(bool e)
+{
+    _editable=e;
 }
 
 void RestRelModel::refresh()

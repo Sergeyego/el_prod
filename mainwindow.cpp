@@ -9,12 +9,12 @@ MainWindow::MainWindow(QWidget *parent)
 
     tabManager = new TabManager(ui->tabWidget,this);
 
-    actAction(ui->actionPart,&MainWindow::newFormPart);
-    actAction(ui->actionReport,&MainWindow::newFormReport);
-    actAction(ui->actionPack,&MainWindow::newFormPack);
-    actAction(ui->actionPerePack,&MainWindow::newFormPerePack);
-    actAction(ui->actionSelf,&MainWindow::newFormSelf);
-    actAction(ui->actionFix,&MainWindow::newFormFix);
+    actAction(ui->actionPart,&MainWindow::newFormPart,1);
+    actAction(ui->actionReport,&MainWindow::newFormReport,4);
+    actAction(ui->actionPack,&MainWindow::newFormPack,4);
+    actAction(ui->actionPerePack,&MainWindow::newFormPerePack,4);
+    actAction(ui->actionSelf,&MainWindow::newFormSelf,4);
+    actAction(ui->actionFix,&MainWindow::newFormFix,4);
 
     loadAnalytics();
 
@@ -29,10 +29,15 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-void MainWindow::actAction(QAction *a, void (MainWindow::*sl)())
+void MainWindow::actAction(QAction *a, void (MainWindow::*sl)(), int lev)
 {
-    connect(a, &QAction::triggered, this, sl);
-    tabManager->actAction(a);
+    if (RestConnection::instance()->groups().contains(lev)){
+        connect(a, &QAction::triggered, this, sl);
+        tabManager->actAction(a);
+    } else {
+        a->setEnabled(false);
+        a->deleteLater();
+    }
 }
 
 void MainWindow::loadSettings()
@@ -67,7 +72,7 @@ void MainWindow::loadAnalytics()
             QString nam=value.toObject().value("nam").toString();
             QAction *act = ui->menu_analytics->addAction(nam);
             act->setProperty("id_olap",id);
-            actAction(act,&MainWindow::newAnalytics);
+            actAction(act,&MainWindow::newAnalytics,4);
         }
     }
 }

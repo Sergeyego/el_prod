@@ -5,6 +5,8 @@
 #include <QDateTime>
 #include <QApplication>
 #include <QNetworkReply>
+#include <QJsonDocument>
+#include <QJsonArray>
 #include "rest/restlogin.h"
 
 class RestConnection : public QObject
@@ -22,6 +24,7 @@ public:
     QNetworkReply* sendGet(QUrl url);
     bool sendSyncRequest(QString path, QString req, const QByteArray &body, QByteArray &respData, QString content_type = "application/json");
     bool sendSyncGet(QString path, QByteArray &data);
+    QSet<int> groups() const;
 
 protected:
     explicit RestConnection(QObject *parent = nullptr);
@@ -35,6 +38,8 @@ private:
     qint64 exp;
     qint64 local_iat;
     QNetworkAccessManager *manager;
+    QSet<int> _groups;
+    void updGroups();
 };
 
 #endif // RESTCONNECTION_H

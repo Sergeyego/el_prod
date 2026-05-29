@@ -33,7 +33,7 @@ public:
 private:
     Ui::MainWindow *ui;
     TabManager *tabManager;
-    void actAction(QAction *a, void (MainWindow::*sl)());
+    void actAction(QAction *a, void (MainWindow::*sl)(), int lev);
     void loadSettings();
     void saveSettings();
     void loadAnalytics();

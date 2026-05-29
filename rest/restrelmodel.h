@@ -17,8 +17,11 @@ public:
     int rowCount(const QModelIndex &parent) const;
     int columnCount(const QModelIndex &parent) const;
     QString getName() const;
+    QString editor() const;
     bool isLimited();
     void setPath(QString p);
+    bool isEditable();
+    void setEditable(bool e);
 
 public slots:
     void refresh();
@@ -35,6 +38,8 @@ private:
     QVector<QVector<QVariant>> _data;
     bool _is_limited;
     QString _path;
+    QString _editor;
+    bool _editable;
 
 private slots:
     void processNextRequest();

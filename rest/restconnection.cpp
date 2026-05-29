@@ -26,6 +26,7 @@ void RestConnection::setToken(const QString &t, const QString &user, const qint6
     iat=from;
     exp=to;
     local_iat=QDateTime::currentSecsSinceEpoch();
+    updGroups();
 }
 
 QString RestConnection::getUrl() const
@@ -111,6 +112,11 @@ bool RestConnection::sendSyncGet(QString path, QByteArray &data)
     return this->sendSyncRequest(path,"GET",body,data);
 }
 
+QSet<int> RestConnection::groups() const
+{
+    return _groups;
+}
+
 
 RestConnection::RestConnection(QObject *parent) : QObject(parent)
 {
@@ -119,5 +125,18 @@ RestConnection::RestConnection(QObject *parent) : QObject(parent)
     exp=0;
     local_iat=0;
     connect(qApp,SIGNAL(aboutToQuit()),this,SLOT(deleteLater()));
+}
+
+void RestConnection::updGroups()
+{
+    _groups.clear();
+    QByteArray data;
+    if (sendSyncGet("api/groups",data)){
+        QJsonDocument doc = QJsonDocument::fromJson(data);
+        for (const QJsonValue &val : doc.array()) {
+            int id_group=val.toObject().value("id_group").toInt();
+            _groups.insert(id_group);
+        }
+    }
 }
 

@@ -3,6 +3,7 @@
 TabManager::TabManager(QTabWidget *tab, QObject *parent) : QObject{parent}, tabWidget(tab)
 {
     tabWidget->setTabsClosable(true);
+    tabWidget->setMovable(true);
     connect(tabWidget,SIGNAL(tabCloseRequested(int)),this,SLOT(closeTab(int)));
 }
 
