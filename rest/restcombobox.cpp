@@ -64,6 +64,11 @@ void RestComboBox::setModel(QAbstractItemModel *model)
             this->setCompleter(completer);
         }
 
+        if (relModel->isEditable() && this->isEditable()){
+            this->lineEdit()->addAction(actionEdt,QLineEdit::TrailingPosition);
+            connect(actionEdt,SIGNAL(triggered(bool)),this,SLOT(edtRel()));
+        }
+
         return;
     }
     return QComboBox::setModel(model);

@@ -7,6 +7,7 @@
 #include <QJsonArray>
 #include <QQueue>
 #include "rest/restrelmodel.h"
+#include "rest/relmodels.h"
 
 struct colVal {
     QString disp;

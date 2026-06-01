@@ -10,6 +10,7 @@
 #include "rest/resttablemodel.h"
 #include "rest/restdateedit.h"
 #include "rest/restcombobox.h"
+#include "rest/resttabledialog.h"
 
 class RestItemDelegate : public QItemDelegate
 {
@@ -20,6 +21,9 @@ public:
     void setEditorData(QWidget *editor, const QModelIndex &index) const;
     void setModelData(QWidget *editor, QAbstractItemModel *model, const QModelIndex &index) const;
     bool eventFilter(QObject *object, QEvent *event);
+
+private slots:
+    void edtRels(QModelIndex index);
 
 signals:
     void createEdt(const QModelIndex index) const;

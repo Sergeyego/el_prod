@@ -6,6 +6,8 @@
 #include "rest/restrelmodel.h"
 #include "rest/resttablemodel.h"
 
+class RestTableModel;
+
 class RelModels : public QObject
 {
     Q_OBJECT

@@ -191,6 +191,7 @@ void RestRoTableModel::selectSync()
 
 void RestRoTableModel::clear()
 {
+    _path.clear();
     beginResetModel();
     _columns.clear();
     colMap.clear();

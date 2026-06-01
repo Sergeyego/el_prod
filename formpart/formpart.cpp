@@ -238,7 +238,6 @@ void FormPart::refreshCont(int ind)
     if (!isProcessing) {
         processNextRequest();
     }
-
 }
 
 void FormPart::processNextRequest()
@@ -330,11 +329,16 @@ void FormPart::refreshGlassData(QModelIndex index)
     QString id_part = mapper->modelData(mapper->currentIndex(),"id").toString();
     QVariant id_c=ui->tableViewGlass->model()->data(ui->tableViewGlass->model()->index(index.row(),3),Qt::EditRole);
 
-    modelConsStatData->setPath("api/elrtr/glass/"+id_part+"/"+id_c.toString());
-    modelConsStatData->select();
+    if (id_c.isValid()){
+        modelConsStatData->setPath("api/elrtr/glass/"+id_part+"/"+id_c.toString());
+        modelConsStatData->select();
 
-    modelConsStatPar->setPath("api/elrtr/glasspar/"+id_part+"/"+id_c.toString());
-    modelConsStatPar->select();
+        modelConsStatPar->setPath("api/elrtr/glasspar/"+id_part+"/"+id_c.toString());
+        modelConsStatPar->select();
+    } else {
+        modelConsStatData->clear();
+        modelConsStatPar->clear();
+    }
 }
 
 void FormPart::clearStat()

@@ -13,6 +13,8 @@ FormPack::FormPack(QWidget *parent) :
     ui->dateEditBeg->setDate(QDate(QDate::currentDate().year(),1,1));
     ui->dateEditEnd->setDate(QDate(QDate::currentDate().year(),12,31));
 
+    //RelModels::instance()->getModel("vars")->setEditable(true);
+
     ui->comboBoxType->setModel(RelModels::instance()->getModel("nakl_pack_type"));
     colVal cType;
     cType.val=1;

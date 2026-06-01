@@ -17,6 +17,7 @@ public:
     explicit RestTableDialog(QString tname, QWidget *parent = nullptr);
     ~RestTableDialog();
     RestTableModel *model;
+    QVariantList currentPk();
 
 private:
     Ui::RestTableDialog *ui;

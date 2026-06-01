@@ -470,6 +470,9 @@ void RestTableModel::loadInfo()
             inf.width = value.toObject().value("width").toVariant();
             _columns.push_back(inf.nam);
             colMap.insert(inf.nam,inf);
+            if (!inf.relnam.isEmpty()){
+                RelModels::instance()->getModel(inf.relnam);
+            }
         }
     }
 }

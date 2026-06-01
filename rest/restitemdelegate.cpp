@@ -12,7 +12,7 @@ QWidget* RestItemDelegate::createEditor(QWidget *parent, const QStyleOptionViewI
         return QItemDelegate::createEditor(parent, option, index);
     }
     QWidget *editor = nullptr;
-    if (!restTableModel->columnInfo(index.column()).relnam.isEmpty()){
+    if (restTableModel->isColumnRel(index.column())){
         editor = new RestComboBox(parent);
     } else {
         switch (restTableModel->columnType(index.column())){
@@ -79,6 +79,9 @@ void RestItemDelegate::setEditorData(QWidget *editor, const QModelIndex &index) 
         if (restTableModel->isColumnRel(index.column())){
             RestComboBox *combo = qobject_cast<RestComboBox *>(editor);
             if (combo) {
+                if (combo->model()!=RelModels::instance()->getModel(restTableModel->columnInfo(index.column()).relnam)){
+                    connect(combo,SIGNAL(sigActionEdtRel(QModelIndex)),this,SLOT(edtRels(QModelIndex)));
+                }
                 combo->setIndex(index);
                 return;
             } else {
@@ -244,7 +247,7 @@ bool RestItemDelegate::eventFilter(QObject *object, QEvent *event)
     if (event->type()==QEvent::KeyPress){
         QKeyEvent *keyEvent = static_cast<QKeyEvent *>(event);
 
-        if(keyEvent->text()=="\r" || keyEvent->key()==Qt::Key_Tab || keyEvent->key()==Qt::Key_Down || keyEvent->key()==Qt::Key_Up){
+        if(keyEvent->key()==Qt::Key_Tab || keyEvent->key()==Qt::Key_Down || keyEvent->key()==Qt::Key_Up){
             QWidget *editor = qobject_cast<QWidget*>(object);
             emit commitData(editor);
             emit closeEditor(editor);
@@ -263,4 +266,24 @@ bool RestItemDelegate::eventFilter(QObject *object, QEvent *event)
         }
     }
     return QItemDelegate::eventFilter(object,event);
+}
+
+void RestItemDelegate::edtRels(QModelIndex index)
+{
+    const RestTableModel *restTableModel = qobject_cast<const RestTableModel *>(index.model());
+    if (restTableModel && restTableModel->isColumnRel(index.column())){
+        colInfo ci = restTableModel->columnInfo(index.column());
+        RestTableDialog d(ci.relnam);
+        d.setWindowTitle("Редактирование таблицы "+ci.snam);
+        d.model->select();
+        d.exec();
+        QVariantList pk = d.currentPk();
+        RestComboBox *combo = qobject_cast<RestComboBox *>(sender());
+        if (combo && pk.size()==1){
+            colVal c;
+            c.val=pk.at(0);
+            combo->setCurrentData(c);
+            RelModels::instance()->getModel(ci.relnam)->refresh();
+        }
+    }
 }

@@ -29,3 +29,17 @@ void RestTableDialog::saveSettings()
     QSettings settings("szsm", QApplication::applicationName());
     settings.setValue("edttable_geometry_"+model->tableInfoName(), this->saveGeometry());
 }
+
+QVariantList RestTableDialog::currentPk()
+{
+    QVariantList pk;
+    int r=ui->tableView->currentIndex().row();
+    if (r>=0){
+        for (int i=0; i<model->columnCount(); i++){
+            if (model->columnInfo(i).is_pk){
+                pk.push_back(model->data(model->index(r,i),Qt::EditRole));
+            }
+        }
+    }
+    return pk;
+}
