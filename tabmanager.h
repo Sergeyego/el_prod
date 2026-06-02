@@ -5,6 +5,7 @@
 #include <QTabWidget>
 #include <QSettings>
 #include <QApplication>
+#include <QAction>
 
 class TabManager : public QObject
 {
