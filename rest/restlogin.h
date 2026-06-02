@@ -20,6 +20,10 @@ class RestLogin : public QDialog
 public:
     explicit RestLogin(const QString title, QWidget *parent = nullptr);
     ~RestLogin();
+    void setUser(QString user);
+    void setPassword(QString pass);
+    void setHost(QString host);
+    void setPort(int port);
 
 private:
     Ui::RestLogin *ui;

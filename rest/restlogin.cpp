@@ -7,7 +7,7 @@ RestLogin::RestLogin(const QString title, QWidget *parent) :
 {
     ui->setupUi(this);
     this->setWindowTitle(title);
-    ui->edtHost->setText("https://192.168.1.134");
+    ui->edtHost->setText("https://127.0.0.1");
     ui->edtPort->setValue(9000);
     ui->groupBox->setVisible(false);
 
@@ -62,4 +62,24 @@ void RestLogin::onResult()
         }
     }
     reply->deleteLater();
+}
+
+void RestLogin::setUser(QString user)
+{
+    ui->edtUser->setText(user);
+}
+
+void RestLogin::setPassword(QString pass)
+{
+    ui->edtPasswd->setText(pass);
+}
+
+void RestLogin::setHost(QString host)
+{
+    ui->edtHost->setText(host);
+}
+
+void RestLogin::setPort(int port)
+{
+    ui->edtPort->setValue(port);
 }

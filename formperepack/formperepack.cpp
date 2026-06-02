@@ -103,7 +103,7 @@ void FormPerePack::nakl()
     QString type=tr("Переупаковка");
     QString filename=tr("ПЕРЕУПАКОВКА_")+mapper->modelData(mapper->currentIndex(),"num").toString();
     int year=mapper->modelData(mapper->currentIndex(),"dat").toDate().year();
-    invManager->getInvoice("api/invoices/elrtr/perepack/"+QString::number(id_nakl),vid,type,filename,year);
+    invManager->getInvoice("api/elrtr/invoices/perepack/"+QString::number(id_nakl),vid,type,filename,year);
 }
 
 void FormPerePack::setDefaultValue()

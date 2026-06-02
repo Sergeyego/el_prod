@@ -13,8 +13,6 @@ FormPack::FormPack(QWidget *parent) :
     ui->dateEditBeg->setDate(QDate(QDate::currentDate().year(),1,1));
     ui->dateEditEnd->setDate(QDate(QDate::currentDate().year(),12,31));
 
-    //RelModels::instance()->getModel("vars")->setEditable(true);
-
     ui->comboBoxType->setModel(RelModels::instance()->getModel("nakl_pack_type"));
     colVal cType;
     cType.val=1;
@@ -155,7 +153,7 @@ void FormPack::nakl()
     QString type=tr("Цех");
     QString filename=ui->comboBoxType->currentText().toUpper()+"_"+mapper->modelData(mapper->currentIndex(),"num").toString();
     int year=mapper->modelData(mapper->currentIndex(),"dat").toDate().year();
-    invManager->getInvoice("api/invoices/elrtr/workshop/"+QString::number(id_nakl),vid,type,filename,year);
+    invManager->getInvoice("api/elrtr/invoices/workshop/"+QString::number(id_nakl),vid,type,filename,year);
 }
 
 void FormPack::naklPer()
@@ -164,7 +162,7 @@ void FormPack::naklPer()
     QString type=tr("Цех");
     QString filename=ui->comboBoxType->currentText().toUpper()+"_"+ui->dateEditBeg->date().toString("yyyy-MM-dd")+"_"+ui->dateEditEnd->date().toString("yyyy-MM-dd");
     int year=mapper->modelData(mapper->currentIndex(),"dat").toDate().year();
-    invManager->getInvoice("api/invoices/elrtr/workshopper/"+ui->dateEditBeg->date().toString("yyyy-MM-dd")+"/"+ui->dateEditEnd->date().toString("yyyy-MM-dd"),vid,type,filename,year);
+    invManager->getInvoice("api/elrtr/invoices/workshopper/"+ui->dateEditBeg->date().toString("yyyy-MM-dd")+"/"+ui->dateEditEnd->date().toString("yyyy-MM-dd"),vid,type,filename,year);
 }
 
 void FormPack::loadPack()

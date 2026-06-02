@@ -135,7 +135,7 @@ void FormSelf::nakl()
     QString type=tr("Цех");
     QString filename=ui->comboBoxType->currentText().toUpper()+"_"+mapper->modelData(mapper->currentIndex(),"num").toString();
     int year=mapper->modelData(mapper->currentIndex(),"dat").toDate().year();
-    invManager->getInvoice("api/invoices/elrtr/self/"+QString::number(id_nakl),vid,type,filename,year);
+    invManager->getInvoice("api/elrtr/invoices/self/"+QString::number(id_nakl),vid,type,filename,year);
 }
 
 void FormSelf::naklPer()
@@ -145,6 +145,6 @@ void FormSelf::naklPer()
     QString type=tr("Цех");
     QString filename=ui->comboBoxType->currentText().toUpper()+"_"+ui->dateEditBeg->date().toString("yyyy-MM-dd")+"_"+ui->dateEditEnd->date().toString("yyyy-MM-dd");
     int year=mapper->modelData(mapper->currentIndex(),"dat").toDate().year();
-    invManager->getInvoice("api/invoices/elrtr/selfper/"+id_type+"/"+ui->dateEditBeg->date().toString("yyyy-MM-dd")+"/"+ui->dateEditEnd->date().toString("yyyy-MM-dd"),vid,type,filename,year);
+    invManager->getInvoice("api/elrtr/invoices/selfper/"+id_type+"/"+ui->dateEditBeg->date().toString("yyyy-MM-dd")+"/"+ui->dateEditEnd->date().toString("yyyy-MM-dd"),vid,type,filename,year);
 }
 

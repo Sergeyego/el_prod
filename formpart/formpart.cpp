@@ -45,16 +45,16 @@ FormPart::FormPart(QWidget *parent) :
     ui->tableViewPress->setModel(modelRab);
 
     modelChem = new RestTableModel("el_parti_chem",this);
-    modelChem->setPath("api/elrtr/chem/parti");
+    modelChem->setPath("api/elrtr/lab/chem/parti");
     modelChem->setDefaultValue("id_dev",1);
     ui->tableViewChem->setModel(modelChem);
 
     modelMech = new RestTableModel("el_parti_mech",this);
-    modelMech->setPath("api/elrtr/mech/parti");
+    modelMech->setPath("api/elrtr/lab/mech/parti");
     ui->tableViewMech->setModel(modelMech);
 
     modelPart = new RestTableModel("el_parti",this);
-    modelPart->setPath("api/elrtr/parti");
+    modelPart->setPath("api/elrtr/lab/parti");
 
     ui->tableViewPart->setModel(modelPart);
 
@@ -279,7 +279,7 @@ void FormPart::loadChem()
             QJsonDocument doc;
             doc.setObject(obj);
             QByteArray data;
-            bool ok = RestConnection::instance()->sendSyncRequest("api/elrtr/chem/load/"+id_part+"/2","POST",doc.toJson(),data);
+            bool ok = RestConnection::instance()->sendSyncRequest("api/elrtr/lab/chem/load/"+id_part+"/2","POST",doc.toJson(),data);
             if (ok){
                 modelChem->select();
                 modelPart->refreshRow(mapper->currentIndex());
@@ -294,7 +294,7 @@ void FormPart::insertChemSamp()
     int id_dev=ui->comboBoxChemDev->getCurrentData().val.toInt();
 
     QByteArray data;
-    bool ok = RestConnection::instance()->sendSyncRequest("api/elrtr/chem/load/"+QString::number(id_part)+"/"+QString::number(id_dev),"POST",data,data);
+    bool ok = RestConnection::instance()->sendSyncRequest("api/elrtr/lab/chem/load/"+QString::number(id_part)+"/"+QString::number(id_dev),"POST",data,data);
     if (ok){
         RestTableDialog d(modelChem->tableInfoName());
         QString filter=d.model->tableName()+".id_part = "+QString::number(id_part);
