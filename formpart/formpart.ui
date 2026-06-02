@@ -646,7 +646,7 @@
           </sizepolicy>
          </property>
          <property name="currentIndex">
-          <number>0</number>
+          <number>1</number>
          </property>
          <widget class="QWidget" name="tab">
           <attribute name="title">
@@ -783,7 +783,14 @@
                 </widget>
                </item>
                <item>
-                <widget class="RestComboBox" name="comboBoxChemDev"/>
+                <widget class="RestComboBox" name="comboBoxChemDev">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                </widget>
                </item>
                <item>
                 <widget class="QPushButton" name="pushButtonSamp">
