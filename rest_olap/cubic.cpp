@@ -84,7 +84,11 @@ void hyper_cube::dims(i_dims Y, i_dims X){
     for(it=(*pY).begin(); it!=(*pY).end(); it++){
         c_key="";
         ms = it.key();
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 15, 0))
         sl = ms.split(dlm,Qt::SkipEmptyParts);
+#else
+        sl = ms.split(dlm,QString::SkipEmptyParts);
+#endif
         for(int i=0; i<sl.size()-1; i++){
             c_key=c_key+sl.at(i)+dlm;
             cY_keys[i][c_key]=it.value();
@@ -94,7 +98,11 @@ void hyper_cube::dims(i_dims Y, i_dims X){
     for(it=(*pX).begin(); it!=(*pX).end(); it++){
         c_key="";
         ms = it.key();
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 15, 0))
         sl = ms.split(dlm,Qt::SkipEmptyParts);
+#else
+        sl = ms.split(dlm,QString::SkipEmptyParts);
+#endif
         for(int i=0; i<sl.size()-1; i++){
             c_key=c_key+sl.at(i)+dlm;
             cX_keys[i][c_key]=it.value();
