@@ -96,6 +96,12 @@
            <property name="enabled">
             <bool>false</bool>
            </property>
+           <property name="minimumSize">
+            <size>
+             <width>200</width>
+             <height>0</height>
+            </size>
+           </property>
           </widget>
          </item>
          <item>
@@ -123,6 +129,19 @@
             </size>
            </property>
           </widget>
+         </item>
+         <item>
+          <spacer name="horizontalSpacer_4">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
          </item>
         </layout>
        </item>
@@ -560,7 +579,7 @@
           <widget class="RestTableView" name="tableViewDozDef">
            <property name="maximumSize">
             <size>
-             <width>190</width>
+             <width>200</width>
              <height>100</height>
             </size>
            </property>
