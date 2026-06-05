@@ -781,6 +781,9 @@
             <layout class="QHBoxLayout" name="horizontalLayout_8">
              <item>
               <layout class="QVBoxLayout" name="verticalLayout_8">
+               <property name="sizeConstraint">
+                <enum>QLayout::SizeConstraint::SetMinimumSize</enum>
+               </property>
                <item>
                 <widget class="QLabel" name="label_34">
                  <property name="sizePolicy">
@@ -915,14 +918,7 @@
                 </widget>
                </item>
                <item>
-                <widget class="RestTableView" name="tableViewMech">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="MinimumExpanding" vsizetype="Expanding">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                </widget>
+                <widget class="RestTableView" name="tableViewMech"/>
                </item>
               </layout>
              </item>
