@@ -13,6 +13,10 @@ FormPart::FormPart(QWidget *parent) :
     ui->tableViewGlassPar->setFont(smallFont);
     ui->scrollArea->setFont(smallFont);
 
+    QDoubleValidator *validator = new QDoubleValidator(0,10,1,this);
+    validator->setLocale(QLocale::English);
+    ui->lineEditDiamOnly->setValidator(validator);
+
     isProcessing=false;
 
     loadSettings();
@@ -101,6 +105,7 @@ FormPart::FormPart(QWidget *parent) :
     mapper->addEmptyLock(ui->pushButtonChem);
     mapper->addEmptyLock(ui->pushButtonSamp);
     mapper->addLock(ui->checkBoxOnly);
+    mapper->addLock(ui->lineEditDiamOnly);
     mapper->addEmptyLock(ui->comboBoxChemDev);
 
     ui->horizontalLayoutMapper->insertWidget(0,mapper);
@@ -110,7 +115,9 @@ FormPart::FormPart(QWidget *parent) :
     connect(modelPart,SIGNAL(sigAboutToBeInsert()),this,SLOT(setDefaultValue()));
     connect(ui->comboBoxOnly,SIGNAL(currentIndexChanged(int)),this,SLOT(updPart()));
     connect(ui->checkBoxOnly,SIGNAL(clicked(bool)),this,SLOT(updPart()));
+    connect(ui->lineEditDiamOnly,SIGNAL(textChanged(QString)),this,SLOT(updPart()));
     connect(ui->checkBoxOnly,SIGNAL(clicked(bool)),ui->comboBoxOnly,SLOT(setEnabled(bool)));
+    connect(ui->checkBoxOnly,SIGNAL(clicked(bool)),ui->lineEditDiamOnly,SLOT(setEnabled(bool)));
     connect(ui->comboBoxRcp,SIGNAL(currentIndexChanged(int)),this,SLOT(insertMark()));
     connect(ui->comboBoxMark,SIGNAL(currentIndexChanged(int)),this,SLOT(insertProvol()));
     connect(ui->lineEditDiam,SIGNAL(editingFinished()),this,SLOT(insertPack()));
@@ -181,6 +188,7 @@ void FormPart::updPart()
         return;
     }
     int id_el=-1;
+    QString diam="";
     if (ui->checkBoxOnly->isChecked()){
         if (sender()==ui->checkBoxOnly){
             colVal d;
@@ -188,6 +196,8 @@ void FormPart::updPart()
             ui->comboBoxOnly->setCurrentData(d);
         }
         id_el=ui->comboBoxOnly->getCurrentData().val.toInt();
+        diam=ui->lineEditDiamOnly->text();
+        diam=diam.replace(",",".");
     }
     if (sender()==ui->pushButtonUpd){
         refreshRels();
@@ -195,6 +205,9 @@ void FormPart::updPart()
     QString filter=modelPart->tableName()+".dat_part between '"+ui->dateEditBeg->date().toString("yyyy-MM-dd")+"' and '"+ui->dateEditEnd->date().toString("yyyy-MM-dd")+"'";
     if (id_el>0){
         filter+=" and "+modelPart->tableName()+".id_el="+QString::number(id_el);
+        if (!diam.isEmpty()){
+            filter+=" and "+modelPart->tableName()+".diam = '"+diam+"'";
+        }
     }
     modelPart->setFilter(filter);
     modelPart->select();

@@ -276,14 +276,15 @@ void RestItemDelegate::edtRels(QModelIndex index)
         RestTableDialog d(ci.relnam);
         d.setWindowTitle("Редактирование таблицы "+ci.snam);
         d.model->select();
-        d.exec();
-        QVariantList pk = d.currentPk();
-        RestComboBox *combo = qobject_cast<RestComboBox *>(sender());
-        if (combo && pk.size()==1){
-            colVal c;
-            c.val=pk.at(0);
-            combo->setCurrentData(c);
-            RelModels::instance()->getModel(ci.relnam)->refresh();
+        if (d.exec()==QDialog::Accepted){
+            QVariantList pk = d.currentPk();
+            RestComboBox *combo = qobject_cast<RestComboBox *>(sender());
+            if (combo && pk.size()==1){
+                colVal c;
+                c.val=pk.at(0);
+                combo->setCurrentData(c);
+            }
         }
+        RelModels::instance()->getModel(ci.relnam)->refresh();
     }
 }
