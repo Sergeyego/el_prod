@@ -42,6 +42,9 @@ QString RestConnection::getToken()
         if (current_time>(local_iat+dt)){
             token="";
             RestLogin l(tr("Пожалуйста, авторизуйтесь"));
+            QUrl url(_url);
+            l.setHost(url.scheme()+"://"+url.host());
+            l.setPort(url.port());
             if (l.exec()!=QDialog::Accepted){
                 QApplication::exit();
             }
