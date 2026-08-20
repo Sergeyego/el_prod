@@ -187,26 +187,27 @@ QStringList ProxyDataModel::getSourceVal(int column)
 
 void ProxyDataModel::setSelectVal(int column, QStringList vals)
 {
-#if (QT_VERSION >= QT_VERSION_CHECK(6, 9, 0))
+    // Повышаем порог до 6.10.0, где гарантированно есть обе функции и флаги
+#if (QT_VERSION >= QT_VERSION_CHECK(6, 10, 0))
     beginFilterChange();
     selection.remove(column);
-    selection.insert(column,vals);
+    selection.insert(column, vals);
     endFilterChange();
 #else
     selection.remove(column);
-    selection.insert(column,vals);
+    selection.insert(column, vals);
     invalidateFilter();
 #endif
 }
 
 void ProxyDataModel::setFilterEnabled(bool b)
 {
-#if (QT_VERSION >= QT_VERSION_CHECK(6, 9, 0))
+#if (QT_VERSION >= QT_VERSION_CHECK(6, 10, 0))
     beginFilterChange();
-    en=b;
+    en = b;
     endFilterChange();
 #else
-    en=b;
+    en = b;
     invalidateFilter();
 #endif
 }
