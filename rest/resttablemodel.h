@@ -30,7 +30,7 @@ struct colInfo {
     QString snam;
     QString udt_name;
     bool is_pk;
-    bool editale;
+    bool editable;
     bool checkable;
     int dec;
     QString relnam;
@@ -66,6 +66,7 @@ class RestTableModel : public QAbstractTableModel
     Q_OBJECT
 public:
     RestTableModel(QString name, QObject *parent);
+    ~RestTableModel();
     Qt::ItemFlags flags(const QModelIndex &index) const;
     QVariant data(const QModelIndex &index, int role=Qt::DisplayRole) const;
     bool setData(const QModelIndex &index, const QVariant &value, int role);
@@ -102,6 +103,7 @@ public:
     static QMetaType::Type getMetaType(const QString &udt_name);
     static QVariant loadEdtVal(const QJsonValue &val, const QString &udt_name);
     static QJsonValue getJsonValue(const QVariant &val);
+    QString formatVal(const QVariant &val, int column) const;
 
 public slots:
     virtual void select();
@@ -136,7 +138,6 @@ private:
     QVector<cellData> loadRow(const QJsonValue &val) const;
     QVector<cellData> defaultRow() const;
 
-    QString formatVal(const QVariant &val, int column) const;
     QJsonObject getRowObject(const QVector<cellData> &row);
 
 signals:

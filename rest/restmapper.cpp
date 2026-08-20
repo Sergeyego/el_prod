@@ -237,11 +237,11 @@ void RestMapper::slotEsc()
 {
     RestTableModel *restModel = qobject_cast<RestTableModel *>(mapper->model());
     if (restModel){
+        restModel->revert();
         if (restModel->isAdd()) {
-            restModel->revert();
             setCurrentViewRow(restModel->rowCount()-1);
-        } else if (restModel->isEdt()){
-            restModel->revert();
+        } else {
+            refresh();
         }
     }
     lock(false);

@@ -10,6 +10,11 @@ RestTableModel::RestTableModel(QString name, QObject *parent) : QAbstractTableMo
     loadInfo();
 }
 
+RestTableModel::~RestTableModel()
+{
+
+}
+
 Qt::ItemFlags RestTableModel::flags(const QModelIndex &index) const
 {
     return colMap.value(_columns.at(index.column())).flags;
@@ -134,7 +139,7 @@ bool RestTableModel::removeRow(int row, const QModelIndex &parent)
         dat+=data(this->index(row,i),Qt::DisplayRole).toString();
     }
     int n=QMessageBox::question(nullptr,QString::fromUtf8("Подтвердите удаление"),
-                                  QString::fromUtf8("Подтветждаете удаление ")+dat+QString::fromUtf8("?"),QMessageBox::Yes| QMessageBox::No);
+                                  QString::fromUtf8("Подтверждаете удаление ")+dat+QString::fromUtf8("?"),QMessageBox::Yes| QMessageBox::No);
     bool ok=false;
     if (n==QMessageBox::Yes) {
         if (apiDelete(row)) {
@@ -334,9 +339,9 @@ int RestTableModel::columnIndex(QString nam) const
 
 void RestTableModel::select()
 {
-    QUrl url = QUrl(RestConnection::instance()->getUrl()+"/"+_path);
+    QUrl url = QUrl(RestConnection::instance()->getUrl() + "/" + _path);
     QUrlQuery query;
-    query.addQueryItem("filter",_filter);
+    query.addQueryItem("filter", _filter);
     url.setQuery(query);
 
     queue.enqueue(url);
@@ -379,27 +384,60 @@ void RestTableModel::processNextRequest()
 
     isProcessing = true;
     QUrl url = queue.dequeue();
-
     QNetworkReply *reply = RestConnection::instance()->sendGet(url);
-    connect(reply,SIGNAL(finished()),this,SLOT(onResult()));
+
+    connect(reply, &QNetworkReply::finished, this, &RestTableModel::onResult);
 }
 
 void RestTableModel::onResult()
 {
     QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
-    if (!reply){
+    if (!reply) {
         return;
     }
-    if (reply->error()!=QNetworkReply::NoError){
-        this->clear();
-        QMessageBox::critical(nullptr,tr("Ошибка"),reply->errorString()+"\n"+reply->readAll(),QMessageBox::Cancel);
-    } else {
-        QJsonDocument doc = QJsonDocument::fromJson(reply->readAll());
-        const QJsonArray rows=doc.array();
-        this->setModelData(rows);
-    }
-    emit sigRefresh();
+
+    const QByteArray data = reply->readAll();
+    const QNetworkReply::NetworkError netError = reply->error();
+
+    // Память освободится автоматически в следующем цикле событий
     reply->deleteLater();
+
+    // 1. Обработка штатной отмены запроса
+    if (netError == QNetworkReply::OperationCanceledError) {
+        processNextRequest();
+        return;
+    }
+
+    // 2. Обработка сетевых ошибок
+    if (netError != QNetworkReply::NoError) {
+        clear();
+        emit sigRefresh();
+        QMessageBox::critical(nullptr, tr("Ошибка сети"), reply->errorString() + "\n" + data, QMessageBox::Cancel);
+        processNextRequest();
+        return;
+    }
+
+    // 3. Парсинг JSON-документа
+    QJsonParseError jsonError;
+    QJsonDocument doc = QJsonDocument::fromJson(data, &jsonError);
+
+    // 4. Обработка ошибок JSON
+    if (jsonError.error != QJsonParseError::NoError) {
+        clear();
+        emit sigRefresh();
+        QString errorString = tr("Ошибка JSON: ") + jsonError.errorString() +
+                              tr("\nПозиция: ") + QString::number(jsonError.offset);
+        QMessageBox::critical(nullptr, tr("Ошибка данных"), errorString, QMessageBox::Cancel);
+        processNextRequest();
+        return;
+    }
+
+    // 5. Успешное выполнение — просто обновляем данные
+    const QJsonArray rows = doc.array();
+    this->setModelData(rows);
+    emit sigRefresh();
+
+    // Строго переходим к следующему запросу
     processNextRequest();
 }
 
@@ -461,11 +499,11 @@ void RestTableModel::loadInfo()
             inf.snam=value.toObject().value("snam").toString();
             inf.udt_name=value.toObject().value("udt_name").toString();
             inf.is_pk=value.toObject().value("is_pk").toBool();
-            inf.editale=value.toObject().value("editable").toBool();
+            inf.editable=value.toObject().value("editable").toBool();
             inf.checkable=value.toObject().value("checkable").toBool();
             inf.dec=value.toObject().value("dec").toInt();
             inf.relnam=value.toObject().value("relnam").toString();          
-            inf.flags = inf.editale ? (Qt::ItemIsEditable | Qt::ItemIsSelectable | Qt::ItemIsUserCheckable | Qt::ItemIsEnabled) : (Qt::ItemIsSelectable | Qt::ItemIsUserCheckable | Qt::ItemIsEnabled);
+            inf.flags = inf.editable ? (Qt::ItemIsEditable | Qt::ItemIsSelectable | Qt::ItemIsUserCheckable | Qt::ItemIsEnabled) : (Qt::ItemIsSelectable | Qt::ItemIsUserCheckable | Qt::ItemIsEnabled);
             inf.defaultVal=nullValue(inf.udt_name);
             inf.width = value.toObject().value("width").toVariant();
             _columns.push_back(inf.nam);

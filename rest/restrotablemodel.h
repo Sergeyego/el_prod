@@ -10,6 +10,7 @@ class RestRoTableModel : public QAbstractTableModel
     Q_OBJECT
 public:
     explicit RestRoTableModel(QObject *parent = nullptr);
+    ~RestRoTableModel();
     QVariant data(const QModelIndex &index, int role=Qt::DisplayRole) const;
     int rowCount(const QModelIndex &parent=QModelIndex()) const;
     int columnCount(const QModelIndex &parent=QModelIndex()) const;

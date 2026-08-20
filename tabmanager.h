@@ -6,6 +6,7 @@
 #include <QSettings>
 #include <QApplication>
 #include <QAction>
+#include <QDir>
 
 class TabManager : public QObject
 {

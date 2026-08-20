@@ -327,17 +327,7 @@ void RestTableView::viewExcel()
 {
     QByteArray data;
     if (createXlsx(data)) {
-        QDir dir(QDir::homePath()+"/.szsm/cash");
-        if (dir.mkpath(dir.path())){
-            QString totalName=dir.path()+"/"+QString::number(QDateTime::currentMSecsSinceEpoch())+".xlsx";
-            QFile file(totalName);
-            if (file.open(QIODevice::WriteOnly)){
-                file.write(data);
-                file.close();
-                QFileInfo fileInfo(file);
-                QDesktopServices::openUrl((QUrl(QUrl::fromLocalFile(fileInfo.absoluteFilePath()))));
-            }
-        }
+        TempFileManager::instance().createFile(data,"xlsx",true);
     }
 }
 

@@ -12,12 +12,12 @@
 #include "rest/resttablemodel.h"
 #include "rest/relmodels.h"
 
-class CustomOnlineCompletter : public QCompleter
+class CustomOnlineCompleter : public QCompleter
 {
     Q_OBJECT
 public:
-    CustomOnlineCompletter(QObject *parent=nullptr);
-    ~CustomOnlineCompletter();
+    CustomOnlineCompleter(QObject *parent=nullptr);
+    ~CustomOnlineCompleter();
     bool eventFilter(QObject *o, QEvent *e);
     void setModel(QAbstractItemModel *c);
     void setWidget(QWidget *widget);
@@ -29,12 +29,12 @@ signals:
     void currentDataChanged(colVal d);
 };
 
-class CustomOfflineCompletter : public QCompleter
+class CustomOfflineCompleter : public QCompleter
 {
     Q_OBJECT
 public:
-    CustomOfflineCompletter(QObject *parent=nullptr);
-    ~CustomOfflineCompletter();
+    CustomOfflineCompleter(QObject *parent=nullptr);
+    ~CustomOfflineCompleter();
     bool eventFilter(QObject *o, QEvent *e);
 };
 

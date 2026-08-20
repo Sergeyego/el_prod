@@ -1,6 +1,7 @@
 #ifndef RELMODELS_H
 #define RELMODELS_H
 
+#include <memory>
 #include <QObject>
 #include <QApplication>
 #include "rest/restrelmodel.h"
@@ -23,7 +24,7 @@ public slots:
     void updateAllRels();
 
 private:
-    static RelModels *relModels_instance;
+    static std::unique_ptr<RelModels> relModels_instance;
     QMap <QString, RestRelModel*> map;
 
 };

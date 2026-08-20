@@ -1,4 +1,12 @@
 #include "olapmodel.h"
+#include <QSet>
+#include <QStringList>
+#include <algorithm>
+
+// Подключаем нужный заголовок для константности контейнеров в зависимости от версии Qt
+#if (QT_VERSION >= QT_VERSION_CHECK(6, 0, 0))
+#include <utility>
+#endif
 
 OlapModel::OlapModel(QStringList axes, int dec, QObject *parent) :
     QAbstractTableModel(parent)
@@ -159,28 +167,46 @@ QStringList ProxyDataModel::getSelectVal(int column)
 
 QStringList ProxyDataModel::getSourceVal(int column)
 {
-    QStringList l;
-    for (int i=0; i<sourceModel()->rowCount(); i++){
-        QString dt=sourceModel()->data(sourceModel()->index(i,column),Qt::EditRole).toString();
-        if (!l.contains(dt)){
-            l.push_back(dt);
-        }
+    QSet<QString> uniqueVals;
+    int rows = sourceModel()->rowCount();
+
+    for (int i = 0; i < rows; i++){
+        uniqueVals.insert(sourceModel()->data(sourceModel()->index(i, column), Qt::EditRole).toString());
     }
-    std::sort(l.begin(),l.end());
+
+    // Универсальная конвертация QSet в список для Qt 5 и Qt 6
+#if (QT_VERSION < QT_VERSION_CHECK(5, 14, 0))
+    QStringList l = uniqueVals.toList();
+#else
+    QStringList l = QStringList(uniqueVals.begin(), uniqueVals.end());
+#endif
+
+    std::sort(l.begin(), l.end());
     return l;
 }
 
 void ProxyDataModel::setSelectVal(int column, QStringList vals)
 {
-    beginResetModel();
+#if (QT_VERSION >= QT_VERSION_CHECK(6, 9, 0))
+    beginFilterChange();
     selection.remove(column);
     selection.insert(column,vals);
-    endResetModel();
+    endFilterChange();
+#else
+    selection.remove(column);
+    selection.insert(column,vals);
+    invalidateFilter();
+#endif
 }
 
 void ProxyDataModel::setFilterEnabled(bool b)
 {
-    beginResetModel();
+#if (QT_VERSION >= QT_VERSION_CHECK(6, 9, 0))
+    beginFilterChange();
     en=b;
-    endResetModel();
+    endFilterChange();
+#else
+    en=b;
+    invalidateFilter();
+#endif
 }

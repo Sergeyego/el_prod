@@ -13,6 +13,7 @@ class RestRelModel : public QAbstractTableModel
     Q_OBJECT
 public:
     explicit RestRelModel(QString name, QObject *parent = nullptr);
+    ~RestRelModel();
     QVariant data(const QModelIndex &index, int role) const;
     int rowCount(const QModelIndex &parent) const;
     int columnCount(const QModelIndex &parent) const;

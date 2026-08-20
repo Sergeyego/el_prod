@@ -12,6 +12,7 @@
 #include "rest/resttablemodel.h"
 #include "rest/restitemdelegate.h"
 #include "rest/restrotablemodel.h"
+#include "rest/tempfilemanager.h"
 
 struct xlsxCol {
     QString key;

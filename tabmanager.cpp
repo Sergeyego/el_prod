@@ -48,7 +48,9 @@ bool TabManager::setActiveSubWindow(QString t)
 
 void TabManager::closeTab(int index)
 {
-    tabWidget->widget(index)->close();
+    if (tabWidget->widget(index)) {
+        tabWidget->widget(index)->close();
+    }
 }
 
 void TabManager::loadSettings()

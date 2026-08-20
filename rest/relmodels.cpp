@@ -1,18 +1,19 @@
 #include "relmodels.h"
 
-RelModels* RelModels::relModels_instance=nullptr;
+std::unique_ptr<RelModels> RelModels::relModels_instance = nullptr;
 
 RelModels::RelModels(QObject *parent) : QObject(parent)
 {
-    connect(qApp,SIGNAL(aboutToQuit()),this,SLOT(deleteLater()));
+
 }
 
 RelModels *RelModels::instance()
 {
-    if (relModels_instance==nullptr){
-        relModels_instance = new RelModels();
+    if (!relModels_instance){
+        // std::unique_ptr сам заберет владение объектом
+        relModels_instance.reset(new RelModels());
     }
-    return relModels_instance;
+    return relModels_instance.get(); // Возвращает обычный указатель RestRelModel*
 }
 
 RestRelModel *RelModels::getModel(QString name)

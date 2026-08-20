@@ -37,6 +37,7 @@ private:
     void loadSettings();
     void saveSettings();
     void loadAnalytics();
+    void clearEmptyMenus();
 
 private slots:
     void newFormPart();

@@ -20,6 +20,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     tabManager->loadSettings();
     loadSettings();
+    clearEmptyMenus();
 }
 
 MainWindow::~MainWindow()
@@ -73,6 +74,27 @@ void MainWindow::loadAnalytics()
             QAction *act = ui->menu_analytics->addAction(nam);
             act->setProperty("id_olap",id);
             actAction(act,&MainWindow::newAnalytics,4);
+        }
+    }
+}
+
+void MainWindow::clearEmptyMenus()
+{
+    QMenuBar* menuBar = this->menuBar();
+    QList<QAction*> actions = menuBar->actions();
+
+    // Перебираем элементы с конца в начало
+    for (int i = actions.count() - 1; i >= 0; --i) {
+        QAction* action = actions.at(i);
+        QMenu* menu = action->menu();
+
+        // Если действие открывает меню и это меню пустое
+        if (menu != nullptr && menu->isEmpty()) {
+            // Удаляем отображение пункта из статус-бара
+            menuBar->removeAction(action);
+
+            // Безопасно уничтожаем объект меню
+            menu->deleteLater();
         }
     }
 }

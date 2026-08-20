@@ -1,12 +1,13 @@
 #include "restconnection.h"
 
-RestConnection* RestConnection::connection_instance=nullptr;
+std::unique_ptr<RestConnection> RestConnection::connection_instance = nullptr;
 
 RestConnection *RestConnection::instance()
 {
-    if (connection_instance==nullptr)
-        connection_instance = new RestConnection();
-    return connection_instance;
+    if (!connection_instance){
+        connection_instance.reset(new RestConnection());
+    }
+    return connection_instance.get(); // Возвращает обычный указатель RestConnection*
 }
 
 RestConnection::~RestConnection()
@@ -36,18 +37,23 @@ QString RestConnection::getUrl() const
 
 QString RestConnection::getToken()
 {
+    static bool isLocking = false; // Защита от рекурсии
+    if (isLocking) return token;
+
     if (iat && exp){
-        qint64 current_time=QDateTime::currentSecsSinceEpoch();
-        qint64 dt=(exp-iat)*0.92;
-        if (current_time>(local_iat+dt)){
-            token="";
+        qint64 current_time = QDateTime::currentSecsSinceEpoch();
+        qint64 dt = (exp - iat) * 0.92;
+        if (current_time > (local_iat + dt)){
+            isLocking = true;
+            token = "";
             RestLogin l(tr("Пожалуйста, авторизуйтесь"));
             QUrl url(_url);
-            l.setHost(url.scheme()+"://"+url.host());
+            l.setHost(url.scheme() + "://" + url.host());
             l.setPort(url.port());
-            if (l.exec()!=QDialog::Accepted){
+            if (l.exec() != QDialog::Accepted){
                 QApplication::exit();
             }
+            isLocking = false;
         }
     }
     return token;
@@ -63,8 +69,10 @@ QNetworkReply *RestConnection::sendRequest(QUrl url, QString req, const QByteArr
     QNetworkRequest request(url);
     request.setRawHeader("Accept-Charset", "UTF-8");
     request.setRawHeader("User-Agent", "Appszsm");
-    if (!token.isEmpty()){
-        request.setRawHeader("Authorization", "Bearer "+this->getToken().toUtf8());
+
+    QString currentToken = getToken();
+    if (!currentToken.isEmpty()){
+        request.setRawHeader("Authorization", "Bearer " + currentToken.toUtf8());
     }
     if (!content_type.isEmpty() && req!="GET"){
         request.setRawHeader("Content-Type", content_type.toUtf8());
@@ -79,7 +87,34 @@ QNetworkReply *RestConnection::sendRequest(QUrl url, QString req, const QByteArr
     } else if (req=="DELETE"){
         reply=manager->deleteResource(request);
     } else {
-        reply=manager->sendCustomRequest(request,req.toUtf8()/*,data*/);
+        reply=manager->sendCustomRequest(request,req.toUtf8(),body);
+    }
+    reply->ignoreSslErrors();
+    return reply;
+}
+
+QNetworkReply *RestConnection::sendRequest(QUrl url, QString req, QHttpMultiPart *multiPart)
+{
+    QNetworkRequest request(url);
+    request.setRawHeader("Accept-Charset", "UTF-8");
+    request.setRawHeader("User-Agent", "Appszsm");
+
+    QString currentToken = getToken();
+    if (!currentToken.isEmpty()){
+        request.setRawHeader("Authorization", "Bearer " + currentToken.toUtf8());
+    }
+
+    QNetworkReply *reply;
+    if (req=="GET"){
+        reply=manager->get(request);
+    } else if (req=="POST"){
+        reply=manager->post(request,multiPart);
+    } else if (req=="PUT"){
+        reply=manager->put(request,multiPart);
+    } else if (req=="DELETE"){
+        reply=manager->deleteResource(request);
+    } else {
+        reply=manager->sendCustomRequest(request,req.toUtf8(),multiPart);
     }
     reply->ignoreSslErrors();
     return reply;
@@ -127,7 +162,6 @@ RestConnection::RestConnection(QObject *parent) : QObject(parent)
     iat=0;
     exp=0;
     local_iat=0;
-    connect(qApp,SIGNAL(aboutToQuit()),this,SLOT(deleteLater()));
 }
 
 void RestConnection::updGroups()

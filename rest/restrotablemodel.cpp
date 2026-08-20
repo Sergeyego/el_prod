@@ -5,6 +5,11 @@ RestRoTableModel::RestRoTableModel(QObject *parent) : QAbstractTableModel{parent
     isProcessing=false;
 }
 
+RestRoTableModel::~RestRoTableModel()
+{
+
+}
+
 QVariant RestRoTableModel::data(const QModelIndex &index, int role) const
 {
     if (!index.isValid()){
@@ -106,7 +111,7 @@ void RestRoTableModel::setModelData(const QJsonObject &data)
         inf.snam=value.toObject().value("snam").toString();
         inf.udt_name=value.toObject().value("udt_name").toString();
         inf.is_pk=false;
-        inf.editale=false;
+        inf.editable=false;
         inf.checkable=false;
         inf.dec=value.toObject().value("dec").toInt();
         inf.relnam="";
@@ -169,9 +174,11 @@ void RestRoTableModel::select()
     if (_path.isEmpty()){
         return;
     }
-    QUrl url = QUrl(RestConnection::instance()->getUrl()+"/"+_path);
+    QUrl url = QUrl(RestConnection::instance()->getUrl() + "/" + _path);
 
     queue.enqueue(url);
+
+    // Если прямо сейчас ничего не выполняется — запускаем
     if (!isProcessing) {
         processNextRequest();
     }
@@ -195,6 +202,7 @@ void RestRoTableModel::clear()
     beginResetModel();
     _columns.clear();
     colMap.clear();
+    modelData.clear();
     endResetModel();
     emit sigRefresh();
 }
@@ -210,24 +218,59 @@ void RestRoTableModel::processNextRequest()
     QUrl url = queue.dequeue();
 
     QNetworkReply *reply = RestConnection::instance()->sendGet(url);
-    connect(reply,SIGNAL(finished()),this,SLOT(onResult()));
+
+    connect(reply, &QNetworkReply::finished, this, &RestRoTableModel::onResult);
+
     emit sigStartRefresh();
 }
 
 void RestRoTableModel::onResult()
 {
     QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
-    if (!reply){
+    if (!reply) {
         return;
     }
-    if (reply->error()!=QNetworkReply::NoError){
-        clear();
-        QMessageBox::critical(nullptr,tr("Ошибка"),reply->errorString()+"\n"+reply->readAll(),QMessageBox::Cancel);
-    } else {
-        QJsonDocument doc = QJsonDocument::fromJson(reply->readAll());
-        setModelData(doc.object());
-    }
+
+    // Извлекаем данные сразу. Нам они понадобятся и для ошибок, и для успешного JSON
+    const QByteArray data = reply->readAll();
+    const QNetworkReply::NetworkError netError = reply->error();
+
+    // Освобождаем память запроса в цикле событий Qt сразу,
+    // чтобы не забыть сделать это в многочисленных return
     reply->deleteLater();
+
+    // 1. Обработка штатной отмены запроса
+    if (netError == QNetworkReply::OperationCanceledError) {
+        processNextRequest();
+        return;
+    }
+
+    // 2. Обработка сетевых ошибок (404, 500, таймаут и т.д.)
+    if (netError != QNetworkReply::NoError) {
+        clear();
+        QMessageBox::critical(nullptr, tr("Ошибка сети"), reply->errorString() + "\n" + data, QMessageBox::Cancel);
+        processNextRequest(); // Переходим к следующему ПОСЛЕ закрытия диалога
+        return;
+    }
+
+    // 3. Парсинг JSON-документа
+    QJsonParseError jsonError;
+    QJsonDocument doc = QJsonDocument::fromJson(data, &jsonError);
+
+    // 4. Обработка синтаксических ошибок JSON
+    if (jsonError.error != QJsonParseError::NoError) {
+        clear();
+        QString errorString = tr("Ошибка JSON: ") + jsonError.errorString() +
+                              tr("\nПозиция: ") + QString::number(jsonError.offset);
+        QMessageBox::critical(nullptr, tr("Ошибка данных"), errorString, QMessageBox::Cancel);
+        processNextRequest();
+        return;
+    }
+
+    // 5. Успешное выполнение: обновляем модель данными
+    setModelData(doc.object());
+
+    // Запускаем следующий запрос из очереди
     processNextRequest();
 }
 

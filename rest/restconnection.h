@@ -1,6 +1,7 @@
 #ifndef RESTCONNECTION_H
 #define RESTCONNECTION_H
 
+#include <memory>
 #include <QObject>
 #include <QDateTime>
 #include <QApplication>
@@ -21,6 +22,7 @@ public:
     QString getToken();
     QString getUser() const;
     QNetworkReply* sendRequest(QUrl url, QString req, const QByteArray &body, QString content_type="application/json");
+    QNetworkReply* sendRequest(QUrl url, QString req, QHttpMultiPart *multiPart);
     QNetworkReply* sendGet(QUrl url);
     bool sendSyncRequest(QString path, QString req, const QByteArray &body, QByteArray &respData, QString content_type = "application/json");
     bool sendSyncGet(QString path, QByteArray &data);
@@ -30,7 +32,7 @@ protected:
     explicit RestConnection(QObject *parent = nullptr);
 
 private:
-    static RestConnection *connection_instance;
+    static std::unique_ptr<RestConnection> connection_instance;
     QString _url;
     QString token;
     QString currentUser;

@@ -236,14 +236,6 @@ void RestItemDelegate::setModelData(QWidget *editor, QAbstractItemModel *model, 
 
 bool RestItemDelegate::eventFilter(QObject *object, QEvent *event)
 {
-    if (event->type()==QEvent::FocusOut){
-        QLineEdit *line = qobject_cast<QLineEdit *>(object);
-        if (line){
-            emit commitData(line);
-            emit closeEditor(line);
-            return false;
-        }
-    }
     if (event->type()==QEvent::KeyPress){
         QKeyEvent *keyEvent = static_cast<QKeyEvent *>(event);
 
@@ -268,21 +260,38 @@ bool RestItemDelegate::eventFilter(QObject *object, QEvent *event)
     return QItemDelegate::eventFilter(object,event);
 }
 
+
 void RestItemDelegate::edtRels(QModelIndex index)
 {
-    const RestTableModel *restTableModel = qobject_cast<const RestTableModel *>(index.model());
+    if (!index.isValid()) return;
+
+    //Получаем доступ к модели через индекс
+    RestTableModel *restTableModel = qobject_cast<RestTableModel *>(const_cast<QAbstractItemModel*>(index.model()));
+
     if (restTableModel && restTableModel->isColumnRel(index.column())){
         colInfo ci = restTableModel->columnInfo(index.column());
         RestTableDialog d(ci.relnam);
-        d.setWindowTitle("Редактирование таблицы "+ci.snam);
+        d.setWindowTitle(tr("Редактирование таблицы ") + ci.snam);
         d.model->select();
-        if (d.exec()==QDialog::Accepted){
+
+        if (d.exec() == QDialog::Accepted){
             QVariantList pk = d.currentPk();
-            RestComboBox *combo = qobject_cast<RestComboBox *>(sender());
-            if (combo && pk.size()==1){
-                colVal c;
-                c.val=pk.at(0);
-                combo->setCurrentData(c);
+
+            if (pk.size() == 1) {
+                QVariant newValue = pk.at(0);
+
+                // Пытаемся получить комбобокс через sender
+                RestComboBox *combo = qobject_cast<RestComboBox *>(sender());
+                if (combo) {
+                    // Если комбобокс есть — обновляем его (он сам потом запишет в модель через setModelData)
+                    colVal c;
+                    c.val = newValue;
+                    combo->setCurrentData(c);
+                } else {
+                    // Если комбобокса НЕТ (sender == nullptr), пишем НАПРЯМУЮ в модель!
+                    restTableModel->setData(index, newValue, Qt::EditRole);
+                    restTableModel->setData(index, restTableModel->formatVal(newValue,index.column()), Qt::DisplayRole);
+                }
             }
         }
         RelModels::instance()->getModel(ci.relnam)->refresh();

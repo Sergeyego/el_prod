@@ -41,6 +41,11 @@ void RestComboBox::setModel(QAbstractItemModel *model)
     RestRelModel *relModel = qobject_cast<RestRelModel *>(model);
     if (relModel){
 
+        if (this->completer()) {
+            this->completer()->deleteLater();
+            this->setCompleter(nullptr);
+        }
+
         QComboBox::setModel(relModel);
         setModelColumn(1);
 
@@ -49,16 +54,16 @@ void RestComboBox::setModel(QAbstractItemModel *model)
         connect(relModel,SIGNAL(modelReset()),this,SLOT(mReset()));
 
         if (relModel->isLimited()){
-            CustomOnlineCompletter *restCompleter = new CustomOnlineCompletter(this);
+            CustomOnlineCompleter *restCompleter = new CustomOnlineCompleter(this);
             restCompleter->setWidget(this);
             this->setCompleter(nullptr);
 
-            RestRelModel *likeModel = new RestRelModel(relModel->getName(),this);
+            RestRelModel *likeModel = new RestRelModel(relModel->getName(),restCompleter);
             restCompleter->setModel(likeModel);
             restCompleter->setCompletionColumn(1);
             connect(restCompleter,SIGNAL(currentDataChanged(colVal)),this,SLOT(setCurrentData(colVal)));
         } else {
-            CustomOfflineCompletter *completer = new CustomOfflineCompletter(this);
+            CustomOfflineCompleter *completer = new CustomOfflineCompleter(this);
             completer->setModel(relModel);
             completer->setCompletionColumn(1);
             this->setCompleter(completer);
@@ -130,7 +135,7 @@ void RestComboBox::setCurrentData(colVal data)
     }
 }
 
-CustomOnlineCompletter::CustomOnlineCompletter(QObject *parent) : QCompleter(parent)
+CustomOnlineCompleter::CustomOnlineCompleter(QObject *parent) : QCompleter(parent)
 {
     setCompletionMode(QCompleter::PopupCompletion);
     setCaseSensitivity(Qt::CaseInsensitive);
@@ -138,12 +143,12 @@ CustomOnlineCompletter::CustomOnlineCompletter(QObject *parent) : QCompleter(par
     connect(this,SIGNAL(activated(QModelIndex)),this,SLOT(setCurrentKey(QModelIndex)));
 }
 
-CustomOnlineCompletter::~CustomOnlineCompletter()
+CustomOnlineCompleter::~CustomOnlineCompleter()
 {
     //qDebug()<<"delete completer";
 }
 
-bool CustomOnlineCompletter::eventFilter(QObject *o, QEvent *e)
+bool CustomOnlineCompleter::eventFilter(QObject *o, QEvent *e)
 {
     if (e->type()==QEvent::KeyPress){
         QKeyEvent *keyEvent = static_cast<QKeyEvent *>(e);
@@ -159,7 +164,7 @@ bool CustomOnlineCompletter::eventFilter(QObject *o, QEvent *e)
     return QCompleter::eventFilter(o,e);
 }
 
-void CustomOnlineCompletter::setModel(QAbstractItemModel *c)
+void CustomOnlineCompleter::setModel(QAbstractItemModel *c)
 {
     RestRelModel *mod = qobject_cast<RestRelModel *>(c);
     if (mod){
@@ -168,7 +173,7 @@ void CustomOnlineCompletter::setModel(QAbstractItemModel *c)
     return QCompleter::setModel(c);
 }
 
-void CustomOnlineCompletter::setWidget(QWidget *widget)
+void CustomOnlineCompleter::setWidget(QWidget *widget)
 {
     RestComboBox *combo = qobject_cast<RestComboBox *>(widget);
     if (combo){
@@ -177,7 +182,7 @@ void CustomOnlineCompletter::setWidget(QWidget *widget)
     return QCompleter::setWidget(widget);
 }
 
-void CustomOnlineCompletter::actComp(QString s)
+void CustomOnlineCompleter::actComp(QString s)
 {
     RestRelModel *mod = qobject_cast<RestRelModel *>(this->model());
     if (mod){
@@ -189,7 +194,7 @@ void CustomOnlineCompletter::actComp(QString s)
     }
 }
 
-void CustomOnlineCompletter::setCurrentKey(QModelIndex index)
+void CustomOnlineCompleter::setCurrentKey(QModelIndex index)
 {
     if (index.isValid()){
         colVal d;
@@ -199,7 +204,7 @@ void CustomOnlineCompletter::setCurrentKey(QModelIndex index)
     }
 }
 
-void CustomOnlineCompletter::actFinished(QString s)
+void CustomOnlineCompleter::actFinished(QString s)
 {
     setCompletionPrefix(s);
     if (s.size()){
@@ -209,18 +214,18 @@ void CustomOnlineCompletter::actFinished(QString s)
     }
 }
 
-CustomOfflineCompletter::CustomOfflineCompletter(QObject *parent) : QCompleter(parent)
+CustomOfflineCompleter::CustomOfflineCompleter(QObject *parent) : QCompleter(parent)
 {
     setCompletionMode(QCompleter::PopupCompletion);
     setCaseSensitivity(Qt::CaseInsensitive);
 }
 
-CustomOfflineCompletter::~CustomOfflineCompletter()
+CustomOfflineCompleter::~CustomOfflineCompleter()
 {
 
 }
 
-bool CustomOfflineCompletter::eventFilter(QObject *o, QEvent *e)
+bool CustomOfflineCompleter::eventFilter(QObject *o, QEvent *e)
 {
     if (e->type()==QEvent::KeyPress){
         QKeyEvent *keyEvent = static_cast<QKeyEvent *>(e);

@@ -28,7 +28,7 @@ public slots:
 
 private slots:
     void txtChangeSlot(QString txt);
-    void shVid();
+    void onCalendarShown();
 };
 
 class RestDateTimeEdit : public QDateTimeEdit
@@ -43,7 +43,7 @@ public slots:
 
 private slots:
     void txtChangeSlot(QString txt);
-    void shVid();
+    void onCalendarShown();
 };
 
 #endif // RESTDATEEDIT_H

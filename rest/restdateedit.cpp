@@ -8,7 +8,7 @@ RestDateEdit::RestDateEdit(QWidget *parent) : QDateEdit(parent)
     this->setDisplayFormat("dd.MM.yy");
     this->setSpecialValueText("NULL");
     connect(this->lineEdit(),SIGNAL(textChanged(QString)),this,SLOT(txtChangeSlot(QString)));
-    connect(pCW,SIGNAL(shown()),this,SLOT(shVid()));
+    connect(pCW,SIGNAL(shown()),this,SLOT(onCalendarShown()));
 
 }
 
@@ -25,11 +25,13 @@ void RestDateEdit::clear()
 void RestDateEdit::txtChangeSlot(QString txt)
 {
     if (txt.isEmpty()){
+        this->blockSignals(true);
         this->setDate(this->minimumDate());
+        this->blockSignals(false);
     }
 }
 
-void RestDateEdit::shVid()
+void RestDateEdit::onCalendarShown()
 {
     if (this->date()==this->minimumDate()){
         this->setDate(QDate::currentDate());
@@ -44,7 +46,7 @@ RestDateTimeEdit::RestDateTimeEdit(QWidget *parent) : QDateTimeEdit(parent)
     this->setDisplayFormat("dd.MM.yy hh:mm");
     this->setSpecialValueText("NULL");
     connect(this->lineEdit(),SIGNAL(textChanged(QString)),this,SLOT(txtChangeSlot(QString)));
-    connect(pCW,SIGNAL(shown()),this,SLOT(shVid()));
+    connect(pCW,SIGNAL(shown()),this,SLOT(onCalendarShown()));
 }
 
 void RestDateTimeEdit::setDateTime(const QDateTime &dateTime)
@@ -60,11 +62,13 @@ void RestDateTimeEdit::clear()
 void RestDateTimeEdit::txtChangeSlot(QString txt)
 {
     if (txt.isEmpty()){
+        this->blockSignals(true);
         this->setDateTime(this->minimumDateTime());
+        this->blockSignals(false);
     }
 }
 
-void RestDateTimeEdit::shVid()
+void RestDateTimeEdit::onCalendarShown()
 {
     if (this->dateTime()==this->minimumDateTime()){
         this->setDateTime(QDateTime::currentDateTime());

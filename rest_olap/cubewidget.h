@@ -9,6 +9,7 @@
 #include "axiswidget.h"
 #include "dialogolapflt.h"
 #include "rest/restrotablemodel.h"
+#include "progressreportdialog/progressreportdialog.h"
 
 namespace Ui {
 class CubeWidget;
@@ -27,7 +28,7 @@ public:
     double getSum();
     
 private:
-    void inital(QString head, QStringList axes, QString qu, int dec);
+    void initial(QString head, QStringList axes, QString qu, int dec);
     Ui::CubeWidget *ui;
     OlapModel *olapmodel;
     QString query;
@@ -38,12 +39,15 @@ private:
     double sum;
     RestRoTableModel *quModel;
     ProxyDataModel *proxyModel;
+    QNetworkReply *currentReply;
+    ProgressReportDialog *progressDialog;
 
 private slots:
     void updQuery();
     void fltEnable(bool b);
     void upd();
     void cfgFlt();
+    void onResult();
 };
 
 #endif // CUBEWIDGET_H

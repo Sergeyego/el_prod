@@ -4,7 +4,7 @@
 CubeWidget::CubeWidget(QString head, QStringList axes, QString qu, int dec, QWidget *parent) :
     QWidget(parent)
 {
-    inital(head,axes,qu,dec);
+    initial(head,axes,qu,dec);
 }
 
 CubeWidget::CubeWidget(int id_cube, QWidget *parent) :
@@ -26,11 +26,16 @@ CubeWidget::CubeWidget(int id_cube, QWidget *parent) :
             axes.push_back(v.toString());
         }
     }
-    inital(nam,axes,qu,dec);
+    initial(nam,axes,qu,dec);
 }
 
 CubeWidget::~CubeWidget()
 {
+    if (currentReply) {
+        currentReply->disconnect(); // отключаем сигналы, чтобы не зайти в onResult
+        currentReply->abort();
+        currentReply->deleteLater();
+    }
     delete ui;
 }
 
@@ -58,10 +63,12 @@ double CubeWidget::getSum()
     return s;
 }
 
-void CubeWidget::inital(QString head, QStringList axes, QString qu, int dec)
+void CubeWidget::initial(QString head, QStringList axes, QString qu, int dec)
 {
     ui = new Ui::CubeWidget;
     ui->setupUi(this);
+    currentReply=nullptr;
+    progressDialog = new ProgressReportDialog(this);
     sum=0.0;
     query=qu;
     decimal=dec;
@@ -74,11 +81,11 @@ void CubeWidget::inital(QString head, QStringList axes, QString qu, int dec)
     proxyModel = new ProxyDataModel(this);
     proxyModel->setSourceModel(quModel);
 
-    QCalendarWidget *begCalendarWidget = new QCalendarWidget(this);
+    QCalendarWidget *begCalendarWidget = new QCalendarWidget(ui->dateEditBeg);
     begCalendarWidget->setFirstDayOfWeek(Qt::Monday);
     ui->dateEditBeg->setCalendarWidget(begCalendarWidget);
     ui->dateEditBeg->setDate(QDate::currentDate().addDays(-QDate::currentDate().day()+1));
-    QCalendarWidget *endCalendarWidget = new QCalendarWidget(this);
+    QCalendarWidget *endCalendarWidget = new QCalendarWidget(ui->dateEditEnd);
     endCalendarWidget->setFirstDayOfWeek(Qt::Monday);
     ui->dateEditEnd->setCalendarWidget(endCalendarWidget);
     ui->dateEditEnd->setDate(QDate::currentDate());
@@ -113,7 +120,7 @@ void CubeWidget::updQuery()
     squery.replace(":d2","'"+ui->dateEditEnd->date().toString("yyyy-MM-dd")+"'");
     QString title=this->windowTitle()+tr(" с ")+ui->dateEditBeg->date().toString("dd.MM.yyyy")+tr(" по ")+ui->dateEditEnd->date().toString("dd.MM.yyyy");
     ui->tableView->setWindowTitle(title);
-    QByteArray body, data;
+    QByteArray body;
     QJsonObject obj;
     obj.insert("qu",QJsonValue(squery));
     obj.insert("columns",QJsonValue(QJsonArray::fromStringList(header)));
@@ -122,11 +129,16 @@ void CubeWidget::updQuery()
     QJsonDocument bodyDoc;
     bodyDoc.setObject(obj);
     body=bodyDoc.toJson();
-    bool ok = RestConnection::instance()->sendSyncRequest("api/olap/data","POST",body,data);
-    if (ok) {
-        QJsonDocument doc = QJsonDocument::fromJson(data);
-        quModel->setModelData(doc.object());
-        upd();
+    if (currentReply && currentReply->isRunning()) {
+        currentReply->disconnect(); // отключаем сигналы, чтобы не зайти в onResult
+        currentReply->abort();
+        currentReply->deleteLater();
+        progressDialog->hide();
+    }
+    currentReply = RestConnection::instance()->sendRequest(QUrl(RestConnection::instance()->getUrl()+"/api/olap/data"),"POST",body);
+    connect(currentReply, SIGNAL(finished()), this, SLOT(onResult()));
+    if (sender()==ui->cmdUpd){
+        progressDialog->show();
     }
 }
 
@@ -169,4 +181,46 @@ void CubeWidget::cfgFlt()
     if (d.exec()==QDialog::Accepted){
         upd();
     }
+}
+
+void CubeWidget::onResult()
+{
+    progressDialog->hide();
+    QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
+    if (!reply){
+        return;
+    }
+
+    // Игнорируем штатную отмену старого запроса
+    if (reply->error() == QNetworkReply::OperationCanceledError) {
+        reply->deleteLater();
+        // Если это был текущий указатель, зануляем его
+        if (reply == currentReply) {
+            currentReply = nullptr;
+        }
+        return;
+    }
+
+    // Сбрасываем указатель, если пришел финальный ответ
+    if (reply == currentReply) {
+        currentReply = nullptr;
+    }
+
+    QByteArray data=reply->readAll();
+
+    if (reply->error()!=QNetworkReply::NoError){
+        QMessageBox::critical(nullptr,tr("Ошибка"),reply->errorString()+"\n"+data,QMessageBox::Cancel);
+    } else {
+        QJsonParseError error;
+        QJsonDocument doc = QJsonDocument::fromJson(data, &error);
+        if (error.error != QJsonParseError::NoError) {
+            QString errorString = "Ошибка JSON:" + error.errorString() + "на позиции:" + QString::number(error.offset);
+            QMessageBox::critical(nullptr,tr("Ошибка"),errorString,QMessageBox::Cancel);
+            quModel->clear();
+        } else {
+            quModel->setModelData(doc.object());
+        }
+        upd();
+    }
+    reply->deleteLater();
 }
