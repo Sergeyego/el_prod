@@ -10,7 +10,7 @@ int main(int argc, char *argv[])
     a.setWindowIcon(QIcon(":/images/ico.ico"));
 
     RestLogin d(QObject::tr("Производство электродов"));
-    d.setHost("https://192.168.1.134");
+    d.setHost("https://192.168.1.10");
     if (d.exec()!=QDialog::Accepted) {
         exit(1);
     }
