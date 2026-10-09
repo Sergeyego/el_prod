@@ -44,7 +44,7 @@ void FormFix::updFixData(int index)
     if (index>=0){
         QDate date=ui->comboBoxDate->model()->data(ui->comboBoxDate->model()->index(index,0),Qt::EditRole).toDate();
         modelFix->setDefaultValue("dat",date);
-        modelFix->setFilter(QString(modelFix->tableName()+".dat = '%1'").arg(date.toString("yyyy-MM-dd")));
+        modelFix->setFilter(RestFilter::rule(modelFix->tableName(),"dat",RestFilter::Op::Eq,date.toString("yyyy-MM-dd")));
         modelFix->select();
     }
 }

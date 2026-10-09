@@ -6,38 +6,12 @@
 #include <QColor>
 #include <QJsonArray>
 #include <QQueue>
+#include <QApplication>
+#include <QMessageBox>
 #include "rest/restrelmodel.h"
 #include "rest/relmodels.h"
-
-struct colVal {
-    QString disp;
-    QVariant val;
-    bool operator==(const colVal& rh) const {
-        return (this->disp==rh.disp) && (this->val==rh.val);
-    }
-};
-
-struct cellData {
-    QString display;
-    QVariant edit;
-    QColor background;
-    QString tooltip;
-};
-
-struct colInfo {
-    QString nam;
-    QString col;
-    QString snam;
-    QString udt_name;
-    bool is_pk;
-    bool editable;
-    bool checkable;
-    int dec;
-    QString relnam;
-    Qt::ItemFlags flags;
-    QVariant defaultVal;
-    QVariant width;
-};
+#include "rest/restfilter.h"
+#include "rest/resttypes.h"
 
 class DataEditor : public QObject
 {
@@ -75,7 +49,7 @@ public:
     virtual bool insertRow(int row, const QModelIndex &parent=QModelIndex());
     virtual bool removeRow(int row, const QModelIndex &parent=QModelIndex());
     virtual bool refreshRow(int row);
-    void setFilter(QString f);
+    void setFilter(const RestFilter &f);
     void setPath(QString p);
     void setInsertable(bool b);
     void setDefaultValue(QString column, QVariant value);
@@ -91,7 +65,7 @@ public:
     QString tableInfoName() const;
     colInfo columnInfo(int col) const;
     QString path() const;
-    QString filter() const;
+    RestFilter filter() const;
     QVariant getModelData(int row, QString col) const;
     bool isColumnRel(int col) const;
     bool isAdd() const;
@@ -102,6 +76,7 @@ public:
     int columnIndex(QString nam) const;
     static QMetaType::Type getMetaType(const QString &udt_name);
     static QVariant loadEdtVal(const QJsonValue &val, const QString &udt_name);
+    static QString variantToDbString(const QVariant &val);
     static QJsonValue getJsonValue(const QVariant &val);
     QString formatVal(const QVariant &val, int column) const;
 
@@ -125,7 +100,7 @@ private:
     QString _path;
     QString _rname;
     QString _tablename;
-    QString _filter;
+    RestFilter _filter;
     QStringList _columns;
     bool block;
     bool insertable;

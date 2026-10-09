@@ -1,11 +1,9 @@
 #ifndef RELMODELS_H
 #define RELMODELS_H
 
-#include <memory>
 #include <QObject>
-#include <QApplication>
-#include "rest/restrelmodel.h"
 #include "rest/resttablemodel.h"
+#include "rest/restrelmodel.h"
 
 class RestTableModel;
 
@@ -17,14 +15,13 @@ protected:
 
 public:
     static RelModels *instance();
-    RestRelModel* getModel(QString name);
+    RestRelModel* getModel(const QString &name);
     ~RelModels();
-    void updateRels(QVector<RestTableModel*> models);
+    void updateRels(const QVector<RestTableModel*> &models);
 public slots:
     void updateAllRels();
 
 private:
-    static std::unique_ptr<RelModels> relModels_instance;
     QMap <QString, RestRelModel*> map;
 
 };

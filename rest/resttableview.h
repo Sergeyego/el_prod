@@ -32,8 +32,9 @@ public:
     QString getTitle();
 
 protected:
-    virtual void keyPressEvent (QKeyEvent *e);
-    virtual void contextMenuEvent(QContextMenuEvent *event);
+    virtual void keyPressEvent(QKeyEvent *e) override;
+    virtual void contextMenuEvent(QContextMenuEvent *event) override;
+    virtual void focusOutEvent(QFocusEvent *event) override;
 
 private:
     QAction *updAct;
@@ -46,7 +47,14 @@ private:
     RestTableModel *restModel;
     RestRoTableModel *restRoModel;
     int _dec;
-    bool createXlsx(QByteArray &xlsx);
+    QJsonObject getJsonData();
+
+    int m_defaultMinHeaderWidth;
+    int m_defaultMaxHeaderWidth;
+    QHeaderView::ResizeMode m_defaultHeaderResizeMode;
+    QAbstractItemView::SelectionMode m_defaultSelectionMode;
+
+    bool m_isInitialStateSaved = false;
 
 public slots:
     void resizeToContents();
@@ -58,7 +66,9 @@ private slots:
     void upd();
     void remove();
     void submit(QModelIndex ind, QModelIndex oldInd);
-    void focusOutEvent(QFocusEvent *event);
+    void saveXlsxFinished();
+    void viewExcelFinished();
+
 };
 
 #endif // RESTTABLEVIEW_H

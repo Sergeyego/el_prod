@@ -12,11 +12,11 @@ RestRoTableModel::~RestRoTableModel()
 
 QVariant RestRoTableModel::data(const QModelIndex &index, int role) const
 {
-    if (!index.isValid()){
+    if (!index.isValid() || index.row() < 0 || index.row() >= modelData.size() || index.column() < 0 || index.column() >= _columns.size()){
         return QVariant();
     }
     QVariant value;
-    cellData cell = modelData[index.row()][index.column()];
+    const cellData &cell = modelData[index.row()][index.column()];
     switch(role)
     {
     case Qt::EditRole:
@@ -31,7 +31,11 @@ QVariant RestRoTableModel::data(const QModelIndex &index, int role) const
     }
     case Qt::BackgroundRole:
     {
-        value=cell.background;
+        if (cell.background.isValid()) {
+            value = cell.background;
+        } else {
+            value = QVariant();
+        }
         break;
     }
     case Qt::ToolTipRole:
@@ -89,6 +93,7 @@ colInfo RestRoTableModel::columnInfo(int col) const
 
 QMetaType::Type RestRoTableModel::columnType(int col) const
 {
+    if (col < 0 || col >= _columns.size()) return QMetaType::QString;
     return RestTableModel::getMetaType(colMap.value(_columns.at(col)).udt_name);
 }
 
@@ -116,7 +121,7 @@ void RestRoTableModel::setModelData(const QJsonObject &data)
         inf.dec=value.toObject().value("dec").toInt();
         inf.relnam="";
         inf.flags=(Qt::ItemIsSelectable | Qt::ItemIsUserCheckable | Qt::ItemIsEnabled);
-        inf.defaultVal=QVariant();
+        inf.defaultVal.val=QVariant();
         inf.width=value.toObject().value("width").toInt();
         _columns.push_back(inf.nam);
         colMap.insert(inf.nam,inf);
@@ -135,7 +140,8 @@ void RestRoTableModel::setModelData(const QJsonObject &data)
             cellData cell;
             cell.display=obj.value("display_role").toString();
             cell.edit=RestTableModel::loadEdtVal(obj.value("edit_role"),col.udt_name);
-            cell.background=QColor(obj.value("background_role").toString());
+            QString bg = obj.value("background_role").toString();
+            cell.background = bg.isEmpty() ? QColor() : QColor(bg);
             cell.tooltip=obj.value("tooltip_role").toString();
             row.push_back(cell);
         }
@@ -198,7 +204,6 @@ void RestRoTableModel::selectSync()
 
 void RestRoTableModel::clear()
 {
-    _path.clear();
     beginResetModel();
     _columns.clear();
     colMap.clear();
@@ -248,7 +253,7 @@ void RestRoTableModel::onResult()
     // 2. Обработка сетевых ошибок (404, 500, таймаут и т.д.)
     if (netError != QNetworkReply::NoError) {
         clear();
-        QMessageBox::critical(nullptr, tr("Ошибка сети"), reply->errorString() + "\n" + data, QMessageBox::Cancel);
+        QMessageBox::critical(QApplication::activeWindow(), tr("Ошибка сети"), reply->errorString() + "\n" + data, QMessageBox::Cancel);
         processNextRequest(); // Переходим к следующему ПОСЛЕ закрытия диалога
         return;
     }
@@ -262,7 +267,7 @@ void RestRoTableModel::onResult()
         clear();
         QString errorString = tr("Ошибка JSON: ") + jsonError.errorString() +
                               tr("\nПозиция: ") + QString::number(jsonError.offset);
-        QMessageBox::critical(nullptr, tr("Ошибка данных"), errorString, QMessageBox::Cancel);
+        QMessageBox::critical(QApplication::activeWindow(), tr("Ошибка данных"), errorString, QMessageBox::Cancel);
         processNextRequest();
         return;
     }

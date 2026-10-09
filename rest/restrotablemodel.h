@@ -3,7 +3,10 @@
 
 #include <QAbstractTableModel>
 #include <QObject>
+#include <QApplication>
+#include <QMessageBox>
 #include "rest/resttablemodel.h"
+#include "rest/resttypes.h"
 
 class RestRoTableModel : public QAbstractTableModel
 {
@@ -33,8 +36,10 @@ private slots:
     void processNextRequest();
     void onResult();
 
-private:
+protected:
     QVector<QVector<cellData>> modelData;
+
+private:
     QMap<QString,colInfo> colMap;
     QString _path;
     QString _title;

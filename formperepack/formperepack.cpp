@@ -66,7 +66,11 @@ void FormPerePack::upd()
     QString begDate=ui->dateEditBeg->date().toString("yyyy-MM-dd");
     QString endDate=ui->dateEditEnd->date().toString("yyyy-MM-dd");
     int id_type=7;
-    QString filter=modelNakl->tableName()+".dat between '"+begDate+"' and '"+endDate+"' and "+modelNakl->tableName()+".tip = "+QString::number(id_type);
+
+    RestFilter filter(RestFilter::Group::And);
+    filter.add(RestFilter::ruleBetween(modelNakl->tableName(),"dat",begDate,endDate));
+    filter.addRule(modelNakl->tableName(),"tip",RestFilter::Op::Eq,id_type);
+
     modelNakl->setDefaultValue("tip",id_type);
     modelNakl->setFilter(filter);
     modelNakl->select();
@@ -75,7 +79,7 @@ void FormPerePack::upd()
 void FormPerePack::updData(int ind)
 {
     int id_nakl=mapper->modelData(ind,"id").toInt();
-    modelPerePack->setFilter(modelPerePack->tableName()+".id_nakl="+QString::number(id_nakl));
+    modelPerePack->setFilter(RestFilter::rule(modelPerePack->tableName(),"id_nakl",RestFilter::Op::Eq,id_nakl));
     modelPerePack->setDefaultValue("id_nakl",id_nakl);
     modelPerePack->select();
 }

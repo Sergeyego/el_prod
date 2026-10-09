@@ -1,47 +1,99 @@
 #ifndef RESTCONNECTION_H
 #define RESTCONNECTION_H
 
-#include <memory>
-#include <QObject>
-#include <QDateTime>
 #include <QApplication>
-#include <QNetworkReply>
+#include <QEventLoop>
 #include <QJsonDocument>
 #include <QJsonArray>
-#include "rest/restlogin.h"
+#include <QJsonObject>
+#include <QMessageBox>
+#include <QTimer>
+#include <QDebug>
+#include <QUrlQuery>
+#include "restlogin.h"
+
+class CancelledReply : public QNetworkReply
+{
+    Q_OBJECT
+public:
+    explicit CancelledReply(QObject *parent = nullptr) : QNetworkReply(parent)
+    {
+        setError(QNetworkReply::OperationCanceledError, QStringLiteral("Session cancelled"));
+        setFinished(true);
+
+        QMetaObject::invokeMethod(this, [this]() {
+            emit finished();
+            deleteLater(); // ИСПРАВЛЕНО: Теперь объект гарантированно удалится сам
+        }, Qt::QueuedConnection);
+    }
+    void abort() override {}
+protected:
+    qint64 readData(char *, qint64) override { return -1; }
+    qint64 bytesAvailable() const override    { return 0; }
+};
 
 class RestConnection : public QObject
 {
     Q_OBJECT
 public:
     static RestConnection *instance();
-    ~RestConnection();
+
     void setUrl(const QString &u);
-    void setToken(const QString &t, const QString &user, const qint64 &from, const qint64 &to);
-    QString getUrl() const;
+    void setCaCertificate(const QString &path);
+
+    void setToken(const QString &t, const QString &user, qint64 from, qint64 to);
     QString getToken();
     QString getUser() const;
-    QNetworkReply* sendRequest(QUrl url, QString req, const QByteArray &body, QString content_type="application/json");
-    QNetworkReply* sendRequest(QUrl url, QString req, QHttpMultiPart *multiPart);
-    QNetworkReply* sendGet(QUrl url);
-    bool sendSyncRequest(QString path, QString req, const QByteArray &body, QByteArray &respData, QString content_type = "application/json");
-    bool sendSyncGet(QString path, QByteArray &data);
-    QSet<int> groups() const;
+    QString getUrl() const;
+    const QSet<int> &groups() const;
 
-protected:
-    explicit RestConnection(QObject *parent = nullptr);
+    QUrl buildUrl(const QString &path, const QUrlQuery &query = {}) const;
+
+    QNetworkReply *sendRequest(const QUrl &url, const QString &req,
+                               const QByteArray &body = {},
+                               const QString &contentType = {});
+    QNetworkReply *sendRequest(const QUrl &url, const QString &req,
+                               QHttpMultiPart *multipart);
+    QNetworkReply *sendGet(const QUrl &url);
+
+    bool sendSyncRequest(const QString &path, const QString &req,
+                         const QByteArray &body, QByteArray &respData,
+                         const QString &contentType = {},
+                         int timeoutMs = 30000);
+    bool sendSyncGet(const QString &path, QByteArray &data, int timeoutMs = 30000);
+
+public slots:
+    void refreshGroups();
+
+signals:
+    void sessionExpired();
+    void groupsChanged();
 
 private:
-    static std::unique_ptr<RestConnection> connection_instance;
+    enum class Method { Get, Post, Put, Delete, Patch, Invalid };
+
+    explicit RestConnection(QObject *parent = nullptr);
+    ~RestConnection() override;
+    Q_DISABLE_COPY(RestConnection)
+
+    static Method parseMethod(const QString &req);
+    QNetworkReply *dispatch(const QUrl &url, Method m,
+                            const QByteArray &body,
+                            QHttpMultiPart *multipart,
+                            const QString &contentType);
+
+    bool loadGroupsSync();
+    void parseGroupsJson(const QByteArray &resp); // Оптимизация: единый парсер JSON
+
+    QNetworkAccessManager *manager = nullptr;
     QString _url;
     QString token;
     QString currentUser;
-    qint64 iat;
-    qint64 exp;
-    qint64 local_iat;
-    QNetworkAccessManager *manager;
+    qint64 iat = 0;
+    qint64 exp = 0;
+    qint64 local_iat = 0;
     QSet<int> _groups;
-    void updGroups();
+    QSslCertificate _caCert;
 };
 
 #endif // RESTCONNECTION_H

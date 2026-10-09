@@ -53,12 +53,6 @@ void MainWindow::saveSettings()
     QSettings settings("szsm", QApplication::applicationName());
     settings.setValue("main_state", this->saveState());
     settings.setValue("main_geometry", this->saveGeometry());
-    QString dirPath=(QDir::homePath()+"/.szsm/cash");
-    QDir dir(dirPath);
-    if (dir.exists()) {
-        dir.removeRecursively();
-    }
-    dir.mkpath(dirPath);
 }
 
 void MainWindow::loadAnalytics()

@@ -204,9 +204,10 @@ void RestMapper::slotNew()
 
 void RestMapper::slotEdt()
 {
-    RestTableModel *restModel = qobject_cast<RestTableModel *>(mapper->model());
-    if (restModel) {
-        restModel->refreshRow(mapper->currentIndex());
+    const int row = mapper->currentIndex();
+    if (row < 0) return;
+    if (RestTableModel *restModel = qobject_cast<RestTableModel *>(mapper->model())) {
+        restModel->refreshRow(row);
     }
     lock(true);
 }

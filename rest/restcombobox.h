@@ -2,61 +2,81 @@
 #define RESTCOMBOBOX_H
 
 #include <QComboBox>
-#include <QEvent>
-#include <QKeyEvent>
-#include <QLineEdit>
 #include <QCompleter>
-#include <QAbstractItemView>
+#include <QLineEdit>
 #include <QAction>
-#include <QApplication>
+#include <QKeyEvent>
+#include <QAbstractItemView>
 #include "rest/resttablemodel.h"
+#include "rest/restrelmodel.h"
 #include "rest/relmodels.h"
+#include "rest/resttypes.h"
 
-class CustomOnlineCompleter : public QCompleter
+class RestComboBox;
+
+// ============================================================
+// Базовый комплитер: общий eventFilter для Enter/Tab
+// ============================================================
+class CustomBaseCompleter : public QCompleter
 {
     Q_OBJECT
 public:
-    CustomOnlineCompleter(QObject *parent=nullptr);
-    ~CustomOnlineCompleter();
-    bool eventFilter(QObject *o, QEvent *e);
+    explicit CustomBaseCompleter(QObject *parent = nullptr);
+
+protected:
+    bool eventFilter(QObject *o, QEvent *e) override;
+};
+
+// ============================================================
+// Онлайн-комплитер: ищет через refreshByPattern на сервере
+// ============================================================
+class CustomOnlineCompleter : public CustomBaseCompleter
+{
+    Q_OBJECT
+public:
+    explicit CustomOnlineCompleter(QObject *parent = nullptr);
+    ~CustomOnlineCompleter() override;
+
     void setModel(QAbstractItemModel *c);
     void setWidget(QWidget *widget);
-private slots:
-    void actComp(QString s);
-    void setCurrentKey(QModelIndex index);
-    void actFinished(QString s);
+
 signals:
-    void currentDataChanged(colVal d);
+    void currentDataChanged(colVal data);
+
+private slots:
+    void actComp(const QString &s);
+    void actFinished(const QString &s);
+    void setCurrentKey(const QModelIndex &index);
 };
 
-class CustomOfflineCompleter : public QCompleter
+// ============================================================
+// Офлайн-комплитер: работает по уже загруженной модели
+// ============================================================
+class CustomOfflineCompleter : public CustomBaseCompleter
 {
     Q_OBJECT
 public:
-    CustomOfflineCompleter(QObject *parent=nullptr);
-    ~CustomOfflineCompleter();
-    bool eventFilter(QObject *o, QEvent *e);
+    explicit CustomOfflineCompleter(QObject *parent = nullptr);
+    ~CustomOfflineCompleter() override;
 };
 
+// ============================================================
+// RestComboBox
+// ============================================================
 class RestComboBox : public QComboBox
 {
     Q_OBJECT
 public:
-    RestComboBox(QWidget *parent=nullptr);
-    colVal getCurrentData();
-    ~RestComboBox();
-    void setIndex(const QModelIndex &index);
-    void setModel(QAbstractItemModel *model);
+    explicit RestComboBox(QWidget *parent = nullptr);
+    ~RestComboBox() override;
 
-private:
-    colVal currentData;
-    colVal saveData;
-    QAction *actionEdt;
-    QModelIndex dbModelIndex;
-    bool isReset;
+    void setIndex(const QModelIndex &index);
+    void setModel(QAbstractItemModel *model) override;
+    colVal getCurrentData() const;
+    void setCurrentData(colVal data);
 
 signals:
-    void sigActionEdtRel(const QModelIndex &index);
+    void sigActionEdtRel(QModelIndex index);
 
 private slots:
     void indexChanged(int n);
@@ -65,8 +85,22 @@ private slots:
     void mAboutReset();
     void mReset();
 
-public slots:
-    void setCurrentData(colVal data);
+private:
+    void cleanupCompleter();
+    void ensureEditAction();
+
+    QModelIndex dbModelIndex;
+    colVal currentData;
+    colVal saveData;
+    bool isReset = false;
+
+    QAction *actionEdt = nullptr;
+
+    // Храним указатели, чтобы корректно удалять при смене модели
+    CustomOnlineCompleter  *m_onlineCompleter  = nullptr;
+    CustomOfflineCompleter *m_offlineCompleter = nullptr;
+    RestRelModel           *m_likeModel        = nullptr;
+    bool m_editActionAdded = false;
 };
 
 #endif // RESTCOMBOBOX_H

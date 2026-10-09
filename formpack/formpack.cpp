@@ -101,7 +101,11 @@ void FormPack::upd()
     QString begDate=ui->dateEditBeg->date().toString("yyyy-MM-dd");
     QString endDate=ui->dateEditEnd->date().toString("yyyy-MM-dd");
     int id_type=ui->comboBoxType->getCurrentData().val.toInt();
-    QString filter=modelNakl->tableName()+".dat between '"+begDate+"' and '"+endDate+"' and "+modelNakl->tableName()+".tip = "+QString::number(id_type);
+
+    RestFilter filter(RestFilter::Group::And);
+    filter.add(RestFilter::ruleBetween(modelNakl->tableName(),"dat",begDate,endDate));
+    filter.addRule(modelNakl->tableName(),"tip",RestFilter::Op::Eq,id_type);
+
     modelNakl->setDefaultValue("tip",id_type);
     modelNakl->setFilter(filter);
     modelNakl->select();
@@ -112,7 +116,7 @@ void FormPack::updData(int ind)
     int id_nakl=mapper->modelData(ind,"id").toInt();
 
     if (ui->comboBoxType->getCurrentData().val==1){
-        modelPack->setFilter(modelPack->tableName()+".id_nakl="+QString::number(id_nakl));
+        modelPack->setFilter(RestFilter::rule(modelPack->tableName(),"id_nakl",RestFilter::Op::Eq,id_nakl));
         modelPack->setDefaultValue("id_nakl",id_nakl);
         modelPack->select();
 
@@ -120,7 +124,7 @@ void FormPack::updData(int ind)
         ui->tableViewNaklData->setModel(modelPack);
         ui->pushButtonLoad->show();
     } else {
-        modelBreak->setFilter(modelBreak->tableName()+".id_nakl="+QString::number(id_nakl));
+        modelBreak->setFilter(RestFilter::rule(modelBreak->tableName(),"id_nakl",RestFilter::Op::Eq,id_nakl));
         modelBreak->setDefaultValue("id_nakl",id_nakl);
         modelBreak->select();
 

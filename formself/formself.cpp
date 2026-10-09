@@ -23,6 +23,7 @@ FormSelf::FormSelf(QWidget *parent) :
     ui->tableViewData->setModel(modelSelfData);
 
     modelSelfNakl = new RestTableModel("el_parti_self",this);
+    modelSelfNakl->setDefaultValue("dat",QDate::currentDate());
     ui->tableViewNakl->setModel(modelSelfNakl);
 
     mapper = new RestMapper(ui->tableViewNakl);
@@ -97,9 +98,14 @@ void FormSelf::upd()
     QString begDate=ui->dateEditBeg->date().toString("yyyy-MM-dd");
     QString endDate=ui->dateEditEnd->date().toString("yyyy-MM-dd");
     int id_type=ui->comboBoxType->getCurrentData().val.toInt();
-    QString filter=modelSelfNakl->tableName()+".dat between '"+begDate+"' and '"+endDate+"' and "+modelSelfNakl->tableName()+".id_cons = "+QString::number(id_type);
+
     modelSelfNakl->setDefaultValue("id_cons",id_type);
     modelSelfData->setDefaultValue("id_cons",id_type);
+
+    RestFilter filter(RestFilter::Group::And);
+    filter.add(RestFilter::ruleBetween(modelSelfNakl->tableName(),"dat",begDate,endDate));
+    filter.addRule(modelSelfNakl->tableName(),"id_cons",RestFilter::Op::Eq,id_type);
+
     modelSelfNakl->setFilter(filter);
     modelSelfNakl->select();
 }
@@ -107,7 +113,7 @@ void FormSelf::upd()
 void FormSelf::updData(int ind)
 {
     int id_nakl=mapper->modelData(ind,"id").toInt();
-    modelSelfData->setFilter(modelSelfData->tableName()+".id_self="+QString::number(id_nakl));
+    modelSelfData->setFilter(RestFilter::rule(modelSelfData->tableName(),"id_self",RestFilter::Op::Eq,id_nakl));
     modelSelfData->setDefaultValue("id_self",id_nakl);
     modelSelfData->select();
 }

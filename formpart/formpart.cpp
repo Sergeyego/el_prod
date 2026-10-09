@@ -59,6 +59,7 @@ FormPart::FormPart(QWidget *parent) :
 
     modelPart = new RestTableModel("el_parti",this);
     modelPart->setPath("api/elrtr/lab/parti");
+    modelPart->setDefaultValue("id_ist",1);
 
     ui->tableViewPart->setModel(modelPart);
 
@@ -202,13 +203,16 @@ void FormPart::updPart()
     if (sender()==ui->pushButtonUpd){
         refreshRels();
     }
-    QString filter=modelPart->tableName()+".dat_part between '"+ui->dateEditBeg->date().toString("yyyy-MM-dd")+"' and '"+ui->dateEditEnd->date().toString("yyyy-MM-dd")+"'";
+
+    RestFilter filter(RestFilter::Group::And);
+    filter.add(RestFilter::ruleBetween(modelPart->tableName(),"dat_part",ui->dateEditBeg->date().toString("yyyy-MM-dd"),ui->dateEditEnd->date().toString("yyyy-MM-dd")));
     if (id_el>0){
-        filter+=" and "+modelPart->tableName()+".id_el="+QString::number(id_el);
+        filter.addRule(modelPart->tableName(),"id_el",RestFilter::Op::Eq,id_el);
         if (!diam.isEmpty()){
-            filter+=" and "+modelPart->tableName()+".diam = '"+diam+"'";
+            filter.addRule(modelPart->tableName(),"diam",RestFilter::Op::Eq,diam);
         }
     }
+
     modelPart->setFilter(filter);
     modelPart->select();
     //qDebug()<<"upd!"<<sender();
@@ -220,29 +224,29 @@ void FormPart::refreshCont(int ind)
     int id_part=mapper->modelData(ind,"id").isNull() ? -1 : mapper->modelData(ind,"id").toInt();
     QDate dat_part=mapper->modelData(ind,"dat_part").toDate();
 
-    modelGlass->setFilter(modelGlass->tableName()+".id_part = "+QString::number(id_part));
+    modelGlass->setFilter(RestFilter::rule(modelGlass->tableName(),"id_part",RestFilter::Op::Eq,id_part));
     modelGlass->setDefaultValue("id_part",id_part);
     modelGlass->select();
 
-    modelZam->setFilter(modelZam->tableName()+".id_part = "+QString::number(id_part));
+    modelZam->setFilter(RestFilter::rule(modelZam->tableName(),"id_part",RestFilter::Op::Eq,id_part));
     modelZam->setDefaultValue("id_part",id_part);
     modelZam->select();
 
-    modelZamBreak->setFilter(modelZamBreak->tableName()+".id_part = "+QString::number(id_part));
+    modelZamBreak->setFilter(RestFilter::rule(modelZamBreak->tableName(),"id_part",RestFilter::Op::Eq,id_part));
     modelZamBreak->setDefaultValue("id_part",id_part);
     modelZamBreak->setDefaultValue("dat",dat_part);
     modelZamBreak->select();
 
-    modelRab->setFilter(modelRab->tableName()+".id_part = "+QString::number(id_part));
+    modelRab->setFilter(RestFilter::rule(modelRab->tableName(),"id_part",RestFilter::Op::Eq,id_part));
     modelRab->setDefaultValue("id_part",id_part);
     modelRab->setDefaultValue("dat",dat_part);
     modelRab->select();
 
-    modelChem->setFilter(modelChem->tableName()+".id_part = "+QString::number(id_part));
+    modelChem->setFilter(RestFilter::rule(modelChem->tableName(),"id_part",RestFilter::Op::Eq,id_part));
     modelChem->setDefaultValue("id_part",id_part);
     modelChem->select();
 
-    modelMech->setFilter(modelMech->tableName()+".id_part = "+QString::number(id_part));
+    modelMech->setFilter(RestFilter::rule(modelMech->tableName(),"id_part",RestFilter::Op::Eq,id_part));
     modelMech->setDefaultValue("id_part",id_part);
     modelMech->select();
 
@@ -307,23 +311,26 @@ void FormPart::insertChemSamp()
     int id_dev=ui->comboBoxChemDev->getCurrentData().val.toInt();
 
     QByteArray data;
-    bool ok = RestConnection::instance()->sendSyncRequest("api/elrtr/lab/chem/load/"+QString::number(id_part)+"/"+QString::number(id_dev),"POST",data,data);
+    bool ok = RestConnection::instance()->sendSyncRequest("api/elrtr/lab/chem/load/"+QString::number(id_part)+"/"+QString::number(id_dev),"POST","{}",data);
+
     if (ok){
         RestTableDialog d(modelChem->tableInfoName());
-        QString filter=d.model->tableName()+".id_part = "+QString::number(id_part);
+
+        RestFilter partiFilter = RestFilter::rule(modelChem->tableName(),"id_part",RestFilter::Op::Eq,id_part);
+
+        RestFilter filter = partiFilter;
+
+        QJsonArray ids;
 
         QJsonDocument doc=QJsonDocument::fromJson(data);
         const QJsonArray arr=doc.array();
         if (arr.size()){
-            QString dop;
             for (const QJsonValue &val : arr){
-                if (!dop.isEmpty()){
-                    dop+=", ";
-                }
-                dop+=QString::number(val.toObject().value("id").toInt());
+                ids.append(val.toObject().value("id"));
             }
-            dop=" and "+d.model->tableName()+".id in ("+dop+")";
-            filter+=dop;
+            filter = RestFilter(RestFilter::Group::And);
+            filter.add(partiFilter);
+            filter.add(RestFilter::ruleIn(d.model->tableName(),"id",ids));
         }
 
         d.model->setPath(modelChem->path());

@@ -23,6 +23,7 @@ SOURCES += \
     rest/restcombobox.cpp \
     rest/restconnection.cpp \
     rest/restdateedit.cpp \
+    rest/restfilter.cpp \
     rest/restitemdelegate.cpp \
     rest/restlogin.cpp \
     rest/restmapper.cpp \
@@ -56,6 +57,7 @@ HEADERS += \
     rest/restcombobox.h \
     rest/restconnection.h \
     rest/restdateedit.h \
+    rest/restfilter.h \
     rest/restitemdelegate.h \
     rest/restlogin.h \
     rest/restmapper.h \
@@ -64,6 +66,7 @@ HEADERS += \
     rest/resttabledialog.h \
     rest/resttablemodel.h \
     rest/resttableview.h \
+    rest/resttypes.h \
     rest/tempfilemanager.h \
     rest_olap/axiswidget.h \
     rest_olap/cubewidget.h \
