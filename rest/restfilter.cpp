@@ -134,7 +134,7 @@ RestFilter& RestFilter::add(const RestFilter &otherFilter)
         m_lastError = QString("Группа содержит невалидный подфильтр: ") + otherFilter.lastError();
     }
 
-    m_subFilters.append(otherFilter);
+    m_subFilters.append(QSharedPointer<RestFilter>::create(otherFilter));
     return *this;
 }
 
@@ -154,8 +154,8 @@ QJsonObject RestFilter::toJsonObject() const
     if (m_isGroup) {
         json["group"] = groupToString(m_groupType);
         QJsonArray rulesArray;
-        for (const auto &subFilter : m_subFilters) {
-            rulesArray.append(subFilter.toJsonObject());
+        for (const auto &sub : m_subFilters) {
+            rulesArray.append(sub->toJsonObject());
         }
         json["rules"] = rulesArray;
     } else {

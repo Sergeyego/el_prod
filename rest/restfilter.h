@@ -5,6 +5,7 @@
 #include <QJsonArray>
 #include <QJsonValue>
 #include <QJsonDocument>
+#include <QSharedPointer>
 
 /**
  * @brief Класс RestFilter реализует value-семантику (семантику значений).
@@ -48,7 +49,7 @@ private:
     bool m_isValid;
     QString m_lastError;
     Group m_groupType;
-    QList<RestFilter> m_subFilters;
+    QList<QSharedPointer<RestFilter>> m_subFilters;
 
     QString m_tablename;
     QString m_field;
