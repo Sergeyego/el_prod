@@ -123,12 +123,11 @@ void DialogLoadChem::loadXmlStat(QXmlStreamReader &reader)
 
 QString DialogLoadChem::loadXmlText(QXmlStreamReader &reader, QString tag)
 {
-    QString t;
-    while (!reader.atEnd() && !(reader.name() == tag && reader.tokenType() == QXmlStreamReader::EndElement)) {
-        reader.readNext();
-        t+=reader.text().toString();
+    if (reader.isStartElement() && reader.name() == tag) {
+        return reader.readElementText();
     }
-    return t;
+
+    return QString();
 }
 
 void DialogLoadChem::setCurrentDir()

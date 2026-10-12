@@ -205,6 +205,7 @@ void FormPart::updPart()
     }
 
     RestFilter filter(RestFilter::Group::And);
+    filter.add(RestFilter::rule(modelPart->tableName(),"id",RestFilter::Op::Ne,0));
     filter.add(RestFilter::ruleBetween(modelPart->tableName(),"dat_part",ui->dateEditBeg->date().toString("yyyy-MM-dd"),ui->dateEditEnd->date().toString("yyyy-MM-dd")));
     if (id_el>0){
         filter.addRule(modelPart->tableName(),"id_el",RestFilter::Op::Eq,id_el);
@@ -282,6 +283,10 @@ void FormPart::setCurrentChemDev()
 
 void FormPart::loadChem()
 {
+    const int currentIndex = mapper->currentIndex();
+    if (currentIndex < 0){
+        return;
+    }
     DialogLoadChem d;
     if (d.exec()==QDialog::Accepted){
         QMap<QString, double> map = d.chemVals();
@@ -292,14 +297,14 @@ void FormPart::loadChem()
                 obj.insert(i.key(),QJsonValue(i.value()));
                 ++i;
             }
-            QString id_part = mapper->modelData(mapper->currentIndex(),"id").toString();
+            QString id_part = mapper->modelData(currentIndex,"id").toString();
             QJsonDocument doc;
             doc.setObject(obj);
             QByteArray data;
             bool ok = RestConnection::instance()->sendSyncRequest("api/elrtr/lab/chem/load/"+id_part+"/2","POST",doc.toJson(),data);
             if (ok){
                 modelChem->select();
-                modelPart->refreshRow(mapper->currentIndex());
+                modelPart->refreshRow(currentIndex);
             }
         }
     }
@@ -340,13 +345,20 @@ void FormPart::insertChemSamp()
         d.model->select();
         d.exec();
         modelChem->select();
-        modelPart->refreshRow(mapper->currentIndex());
+        int currentInd = mapper->currentIndex();
+        if (currentInd>=0){
+            modelPart->refreshRow(currentInd);
+        }
     }
 }
 
 void FormPart::refreshGlassData(QModelIndex index)
 {
-    QString id_part = mapper->modelData(mapper->currentIndex(),"id").toString();
+    const int currentIndex = mapper->currentIndex();
+    if (currentIndex < 0){
+        return;
+    }
+    QString id_part = mapper->modelData(currentIndex,"id").toString();
     QVariant id_c=ui->tableViewGlass->model()->data(ui->tableViewGlass->model()->index(index.row(),3),Qt::EditRole);
 
     if (id_c.isValid()){
