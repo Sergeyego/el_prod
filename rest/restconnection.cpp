@@ -1,4 +1,5 @@
 #include "restconnection.h"
+#include <QAuthenticator>
 
 RestConnection *RestConnection::instance()
 {
