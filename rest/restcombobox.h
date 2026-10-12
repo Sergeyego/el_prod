@@ -71,7 +71,7 @@ public:
     ~RestComboBox() override;
 
     void setIndex(const QModelIndex &index);
-    void setModel(QAbstractItemModel *model) override;
+    void setModel(QAbstractItemModel *model);
     colVal getCurrentData() const;
     void setCurrentData(colVal data);
 
