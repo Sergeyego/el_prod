@@ -1,4 +1,4 @@
-#include "RestFilter.h"
+#include "restfilter.h"
 #include <QJsonDocument>
 #include <QDebug>
 
