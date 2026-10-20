@@ -91,17 +91,13 @@ void RestLogin::onResult()
     reply->deleteLater();
 
     if (err != QNetworkReply::NoError) {
-        QMessageBox::critical(QApplication::activeWindow(),
-                              tr("Ошибка"), errStr + "\n" + data,
-                              QMessageBox::Cancel);
+        RestError::instance()->push(tr("Ошибка"), errStr + "\n" + data);
         return;
     }
 
     const QJsonDocument doc = QJsonDocument::fromJson(data);
     if (doc.isNull()) {
-        QMessageBox::critical(QApplication::activeWindow(),
-                              tr("Ошибка"), tr("Некорректный ответ сервера."),
-                              QMessageBox::Cancel);
+        RestError::instance()->push(tr("Ошибка"), tr("Некорректный ответ сервера."));
         return;
     }
 
@@ -112,9 +108,7 @@ void RestLogin::onResult()
     const qint64 exp    = obj.value("exp").toVariant().toLongLong();
 
     if (token.isEmpty()) {
-        QMessageBox::critical(QApplication::activeWindow(),
-                              tr("Ошибка"), tr("Токен не получен."),
-                              QMessageBox::Cancel);
+        RestError::instance()->push(tr("Ошибка"), tr("Токен не получен."));
         return;
     }
 

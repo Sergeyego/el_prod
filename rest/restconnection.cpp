@@ -254,7 +254,7 @@ bool RestConnection::sendSyncRequest(const QString &path, const QString &req,
 
     if (err != QNetworkReply::NoError) {
         if (err != QNetworkReply::OperationCanceledError) {
-            QMessageBox::critical(QApplication::activeWindow(), tr("Ошибка"), errStr + "\n" + respData, QMessageBox::Cancel);
+            RestError::instance()->push(tr("Ошибка"), errStr + "\n" + respData);
         }
         return false;
     }

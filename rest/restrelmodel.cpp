@@ -154,7 +154,7 @@ void RestRelModel::onResult()
     if (netError != QNetworkReply::NoError) {
         clear();
         emit refreshFinished(pattern);
-        QMessageBox::critical(QApplication::activeWindow(), tr("Ошибка сети"), networkErrorString + "\n" + data, QMessageBox::Cancel);
+        RestError::instance()->push(tr("Ошибка сети"), networkErrorString + "\n" + data);
         processNextRequest();
         return;
     }
@@ -169,7 +169,7 @@ void RestRelModel::onResult()
         emit refreshFinished(pattern);
         QString errorString = tr("Ошибка JSON: ") + jsonError.errorString() +
                               tr("\nПозиция: ") + QString::number(jsonError.offset);
-        QMessageBox::critical(QApplication::activeWindow(), tr("Ошибка данных"), errorString, QMessageBox::Cancel);
+        RestError::instance()->push(tr("Ошибка данных"), errorString);
         processNextRequest();
         return;
     }

@@ -356,7 +356,7 @@ void RestTableView::saveXlsxFinished()
         QByteArray data=reply->readAll();
         bool ok=(reply->error()==QNetworkReply::NoError);
         if (!ok){
-            QMessageBox::critical(this,tr("Ошибка"),reply->errorString()+"\n"+data,QMessageBox::Cancel);
+            RestError::instance()->push(tr("Ошибка"),reply->errorString()+"\n"+data);
         } else {
             QString fnam = this->getTitle();
             QSettings settings("szsm", QApplication::applicationName());
@@ -388,7 +388,7 @@ void RestTableView::viewExcelFinished()
         QByteArray data=reply->readAll();
         bool ok=(reply->error()==QNetworkReply::NoError);
         if (!ok){
-            QMessageBox::critical(this,tr("Ошибка"),reply->errorString()+"\n"+data,QMessageBox::Cancel);
+            RestError::instance()->push(tr("Ошибка"),reply->errorString()+"\n"+data);
         } else {
             TempFileManager::instance().createFile(data,"xlsx",true);
         }

@@ -8,6 +8,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include "rest/restconnection.h"
+#include "rest/resterror.h"
 
 namespace Ui {
     class RestLogin;

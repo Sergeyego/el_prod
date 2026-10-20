@@ -10,7 +10,8 @@
 #include <QTimer>
 #include <QDebug>
 #include <QUrlQuery>
-#include "restlogin.h"
+#include "rest/restlogin.h"
+#include "rest/resterror.h"
 
 class CancelledReply : public QNetworkReply
 {

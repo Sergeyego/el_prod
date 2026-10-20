@@ -7,6 +7,7 @@
 #include <QMessageBox>
 #include "rest/resttablemodel.h"
 #include "rest/resttypes.h"
+#include "rest/resterror.h"
 
 class RestRoTableModel : public QAbstractTableModel
 {
@@ -26,6 +27,7 @@ public:
     QString title() const;
     QString path() const;
     QVariant getModelData(int row, QString col) const;
+    int findRowByKey(QVariant key, QString col) const;
 
 public slots:
     void select();

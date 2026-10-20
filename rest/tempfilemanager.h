@@ -3,6 +3,7 @@
 #include <QTemporaryDir>
 #include <QByteArray>
 #include <QString>
+#include "rest/resterror.h"
 
 class TempFileManager : public QObject {
     Q_OBJECT

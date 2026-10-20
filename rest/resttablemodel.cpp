@@ -316,6 +316,68 @@ QVariant RestTableModel::getModelData(int row, QString col) const
     return this->data(this->index(row,_columns.indexOf(col)),Qt::EditRole);
 }
 
+QVariantList RestTableModel::getPrimaryKeys(int row)
+{
+    QVariantList pks;
+    if (!this->isEmpty() && row>=0 && row<this->rowCount()){
+        QMapIterator<QString, colInfo> i(colMap);
+        while (i.hasNext()) {
+            i.next();
+            if (i.value().is_pk){
+                pks.push_back(getModelData(row,i.key()));
+            }
+        }
+    }
+    return pks;
+}
+
+int RestTableModel::findRowByPrimaryKeys(const QVariantList &keys) const
+{
+    // Если таблица пустая или количество переданных ключей не совпадает
+    // с реальным количеством PK в схеме таблицы, поиск бессмысленен.
+    if (this->rowCount() == 0 || keys.isEmpty()) {
+        return -1;
+    }
+
+    // Проходим по всем строкам модели
+    for (int row = 0; row < this->rowCount(); ++row) {
+
+        // ВАЖНО: Вместо вызова getPrimaryKeys(row), который создает новый список в памяти
+        // на каждой итерации, мы разворачиваем логику сравнения прямо здесь для высокой скорости.
+        int keyIndex = 0;
+        bool matchFound = true;
+
+        // Используем классический итератор, совместимый с Qt 5 и Qt 6
+        for (auto it = colMap.constBegin(); it != colMap.constEnd(); ++it) {
+            if (it.value().is_pk) {
+                // Если нам передали меньше ключей, чем есть в базе данных
+                if (keyIndex >= keys.size()) {
+                    matchFound = false;
+                    break;
+                }
+
+                // Извлекаем значение ячейки для текущего первичного ключа
+                QVariant cellValue = getModelData(row, it.key());
+
+                // Сравниваем значение в модели с искомым ключом
+                if (cellValue != keys.at(keyIndex)) {
+                    matchFound = false;
+                    break; // Ключ не совпал, текущая строка не подходит
+                }
+
+                keyIndex++;
+            }
+        }
+
+        // Если все ключи совпали и мы проверили именно столько ключей, сколько нам передали
+        if (matchFound && keyIndex == keys.size()) {
+            return row; // Строка найдена!
+        }
+    }
+
+    return -1; // Строка с такими ключами не найдена
+}
+
 bool RestTableModel::isColumnRel(int col) const
 {
     return (col>=0 && col<columnCount()) ? (!colMap.value(_columns.at(col)).relnam.isEmpty()) : false;
@@ -353,6 +415,7 @@ int RestTableModel::columnIndex(QString nam) const
 
 void RestTableModel::select()
 {
+    emit sigAboutToBeSelect();
     QUrl url = QUrl(RestConnection::instance()->getUrl() + "/" + _path);
     QUrlQuery query;
     query.addQueryItem("filterobj", _filter.toJsonString());
@@ -366,6 +429,7 @@ void RestTableModel::select()
 
 void RestTableModel::selectSync()
 {
+    emit sigAboutToBeSelect();
     QByteArray data;
     QUrlQuery query;
     query.addQueryItem("filterobj",_filter.toJsonString());
@@ -426,7 +490,7 @@ void RestTableModel::onResult()
     if (netError != QNetworkReply::NoError) {
         clear();
         emit sigRefresh();
-        QMessageBox::critical(QApplication::activeWindow(), tr("Ошибка сети"), reply->errorString() + "\n" + data, QMessageBox::Cancel);
+        RestError::instance()->push(tr("Ошибка сети"),reply->errorString() + "\n" + data);
         processNextRequest();
         return;
     }
@@ -441,7 +505,7 @@ void RestTableModel::onResult()
         emit sigRefresh();
         QString errorString = tr("Ошибка JSON: ") + jsonError.errorString() +
                               tr("\nПозиция: ") + QString::number(jsonError.offset);
-        QMessageBox::critical(QApplication::activeWindow(), tr("Ошибка данных"), errorString, QMessageBox::Cancel);
+        RestError::instance()->push(tr("Ошибка данных"), errorString);
         processNextRequest();
         return;
     }
@@ -531,8 +595,8 @@ void RestTableModel::loadInfo()
 
 void RestTableModel::setModelData(const QJsonArray &data)
 {
-    editor->revert();
     beginResetModel();
+    editor->submit();
     modelData.clear();
     for (const QJsonValue &value : data) {
         modelData.push_back(loadRow(value));

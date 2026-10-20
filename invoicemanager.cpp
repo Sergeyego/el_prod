@@ -22,7 +22,7 @@ void InvoiceManager::onResult()
         return;
     }
     if (reply->error()!=QNetworkReply::NoError){
-        QMessageBox::critical(nullptr,tr("Ошибка"),reply->errorString()+"\n"+reply->readAll(),QMessageBox::Cancel);
+        RestError::critical(tr("Ошибка"),reply->errorString()+"\n"+reply->readAll());
     } else {
         QString vid=reply->property("invoice_vid").toString();
         QString type=reply->property("invoice_type").toString();

@@ -8,8 +8,8 @@
 #include <QPushButton>
 #include <QHBoxLayout>
 #include <QApplication>
-#include "resttablemodel.h"
-#include "restitemdelegate.h"
+#include "rest/resttablemodel.h"
+#include "rest/restitemdelegate.h"
 
 class RestMapper : public QWidget
 {
@@ -29,9 +29,9 @@ public:
     QVariant modelData(int row, QString column);
     
 private:
-    QVector <QWidget*> lock1;
-    QVector <QWidget*> lock2;
-    QVector <QWidget*> lockEmpty;
+    QVector <QWidget*> lockedWidgets;
+    QVector <QWidget*> unlockedWidgets;
+    QVector <QWidget*> lockedEmptyWidgets;
     QDataWidgetMapper *mapper;
     QAbstractItemView *viewer;
     QPushButton *cmdNew;
@@ -42,6 +42,9 @@ private:
     QHBoxLayout *mainLayout;
     bool isEdt;
     int defaultFocus;
+    QVariantList savedPk;
+    bool m_addPending = false;
+    void insertNewRow();
 
 public slots:
     void refresh();
@@ -53,6 +56,9 @@ public slots:
     void first();
     void last();
     void setCurrentViewRow(int row);
+    void reqSelect();
+    void restorePos();
+
 
 private slots:
     void checkEmpty();

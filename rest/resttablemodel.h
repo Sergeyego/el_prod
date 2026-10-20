@@ -12,6 +12,7 @@
 #include "rest/relmodels.h"
 #include "rest/restfilter.h"
 #include "rest/resttypes.h"
+#include "rest/resterror.h"
 
 class DataEditor : public QObject
 {
@@ -67,6 +68,8 @@ public:
     QString path() const;
     RestFilter filter() const;
     QVariant getModelData(int row, QString col) const;
+    QVariantList getPrimaryKeys(int row);
+    int findRowByPrimaryKeys(const QVariantList &keys) const;
     bool isColumnRel(int col) const;
     bool isAdd() const;
     bool isEdt() const;
@@ -91,11 +94,13 @@ private slots:
     void processNextRequest();
     void onResult();
 
+protected:
+    QVector<QVector<cellData>> modelData;
+
 private:
     QQueue<QUrl> queue;
     bool isProcessing;
     DataEditor *editor;
-    QVector<QVector<cellData>> modelData;
     QMap<QString,colInfo> colMap;
     QString _path;
     QString _rname;
@@ -118,6 +123,7 @@ private:
 signals:
     void sigUpd();
     void sigRefresh();
+    void sigAboutToBeSelect();
     void sigAboutToBeInsert();
 };
 

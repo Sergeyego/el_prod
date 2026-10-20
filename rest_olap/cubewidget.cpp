@@ -209,13 +209,13 @@ void CubeWidget::onResult()
     QByteArray data=reply->readAll();
 
     if (reply->error()!=QNetworkReply::NoError){
-        QMessageBox::critical(nullptr,tr("Ошибка"),reply->errorString()+"\n"+data,QMessageBox::Cancel);
+        RestError::critical(tr("Ошибка"),reply->errorString()+"\n"+data);
     } else {
         QJsonParseError error;
         QJsonDocument doc = QJsonDocument::fromJson(data, &error);
         if (error.error != QJsonParseError::NoError) {
             QString errorString = "Ошибка JSON:" + error.errorString() + "на позиции:" + QString::number(error.offset);
-            QMessageBox::critical(nullptr,tr("Ошибка"),errorString,QMessageBox::Cancel);
+            RestError::critical(tr("Ошибка"),errorString);
             quModel->clear();
         } else {
             quModel->setModelData(doc.object());

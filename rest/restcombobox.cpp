@@ -148,7 +148,9 @@ colVal RestComboBox::getCurrentData() const
 void RestComboBox::cleanupCompleter()
 {
     // Отвязываем и удаляем оба вида комплитеров и временную модель поиска
-    setCompleter(nullptr);
+    if (isEditable()){
+        setCompleter(nullptr);
+    }
 
     if (m_onlineCompleter) {
         m_onlineCompleter->deleteLater();
@@ -221,31 +223,33 @@ void RestComboBox::setModel(QAbstractItemModel *model)
             this, &RestComboBox::mReset,
             Qt::UniqueConnection);
 
-    if (relModel->isLimited()) {
-        // Онлайн-поиск: отдельная модель для like-запросов
-        m_onlineCompleter = new CustomOnlineCompleter(this);
-        m_onlineCompleter->setWidget(this);
+    if (isEditable()){
+        if (relModel->isLimited()) {
+            // Онлайн-поиск: отдельная модель для like-запросов
+            m_onlineCompleter = new CustomOnlineCompleter(this);
+            m_onlineCompleter->setWidget(this);
 
-        m_likeModel = new RestRelModel(relModel->getName(), m_onlineCompleter);
-        m_onlineCompleter->setModel(m_likeModel);
-        m_onlineCompleter->setCompletionColumn(1);
+            m_likeModel = new RestRelModel(relModel->getName(), m_onlineCompleter);
+            m_onlineCompleter->setModel(m_likeModel);
+            m_onlineCompleter->setCompletionColumn(1);
 
-        connect(m_onlineCompleter, &CustomOnlineCompleter::currentDataChanged,
-                this, &RestComboBox::setCurrentData,
-                Qt::UniqueConnection);
+            connect(m_onlineCompleter, &CustomOnlineCompleter::currentDataChanged,
+                    this, &RestComboBox::setCurrentData,
+                    Qt::UniqueConnection);
 
-        // QComboBox::setCompleter(nullptr) — оставляем встроенный механизм отключённым
-        QComboBox::setCompleter(nullptr);
-    } else {
-        // Офлайн-поиск: работаем по уже загруженной модели справочника
-        m_offlineCompleter = new CustomOfflineCompleter(this);
-        m_offlineCompleter->setModel(relModel);
-        m_offlineCompleter->setCompletionColumn(1);
-        QComboBox::setCompleter(m_offlineCompleter);
-    }
+            // QComboBox::setCompleter(nullptr) — оставляем встроенный механизм отключённым
+            QComboBox::setCompleter(nullptr);
+        } else {
+            // Офлайн-поиск: работаем по уже загруженной модели справочника
+            m_offlineCompleter = new CustomOfflineCompleter(this);
+            m_offlineCompleter->setModel(relModel);
+            m_offlineCompleter->setCompletionColumn(1);
+            QComboBox::setCompleter(m_offlineCompleter);
+        }
 
-    if (relModel->isEditable() && isEditable()) {
-        ensureEditAction();
+        if (relModel->isEditable()) {
+            ensureEditAction();
+        }
     }
 }
 

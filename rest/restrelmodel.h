@@ -10,7 +10,7 @@
 #include <QMessageBox>
 #include "rest/restconnection.h"
 #include "rest/resttypes.h"
-
+#include "rest/resterror.h"
 
 class RestRelModel : public QAbstractTableModel
 {

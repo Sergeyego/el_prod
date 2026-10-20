@@ -42,7 +42,8 @@ RestMapper::RestMapper(QAbstractItemView *v, QWidget *parent) :
         if (!restModel->isInsertable()){
             cmdNew->hide();
         }
-        connect(restModel,SIGNAL(sigRefresh()),this,SLOT(last()));
+        connect(restModel,SIGNAL(sigAboutToBeSelect()),this,SLOT(reqSelect()));
+        connect(restModel,SIGNAL(sigRefresh()),this,SLOT(restorePos()));
         connect(restModel,SIGNAL(sigRefresh()),this,SLOT(checkEmpty()));
     }
 
@@ -64,17 +65,17 @@ RestMapper::~RestMapper()
 
 void RestMapper::addLock(QWidget *widget)
 {
-    lock1.push_back(widget);
+    lockedWidgets.push_back(widget);
 }
 
 void RestMapper::addUnLock(QWidget *widget)
 {
-    lock2.push_back(widget);
+    unlockedWidgets.push_back(widget);
 }
 
 void RestMapper::addEmptyLock(QWidget *widget)
 {
-    lockEmpty.push_back(widget);
+    lockedEmptyWidgets.push_back(widget);
 }
 
 void RestMapper::lock(bool val)
@@ -85,9 +86,9 @@ void RestMapper::lock(bool val)
     cmdEsc->setEnabled(val);
     cmdNew->setEnabled(!val);
     cmdWrite->setEnabled(val);
-    for (int i=0; i<lock1.size(); i++) lock1[i]->setEnabled(!val);
-    for (int i=0; i<lock2.size(); i++) lock2[i]->setEnabled(val);
-    for (int i=0; i<lockEmpty.size(); i++) lockEmpty[i]->setEnabled(!val);
+    for (int i=0; i<lockedWidgets.size(); i++) lockedWidgets[i]->setEnabled(!val);
+    for (int i=0; i<unlockedWidgets.size(); i++) unlockedWidgets[i]->setEnabled(val);
+    for (int i=0; i<lockedEmptyWidgets.size(); i++) lockedEmptyWidgets[i]->setEnabled(!val);
     emit lockChanged(val);
 }
 
@@ -96,7 +97,7 @@ void RestMapper::checkEmpty()
     RestTableModel *restModel = qobject_cast<RestTableModel *>(mapper->model());
     if (restModel) {
         bool val= restModel->rowCount()<=1 && restModel->isAdd();
-        for (int i=0; i<lockEmpty.size(); i++) lockEmpty[i]->setEnabled(!val);
+        for (int i=0; i<lockedEmptyWidgets.size(); i++) lockedEmptyWidgets[i]->setEnabled(!val);
         cmdEdt->setEnabled(!val);
         cmdDel->setEnabled(!val);
         emit lockChanged(val);
@@ -156,6 +157,30 @@ QVariant RestMapper::modelData(int row, QString column)
     return value;
 }
 
+void RestMapper::insertNewRow()
+{
+    RestTableModel *restModel = qobject_cast<RestTableModel *>(mapper->model());
+    if (!restModel) return;
+
+    if (!restModel->insertRow(restModel->rowCount())) return;
+
+    setCurrentViewRow(restModel->rowCount() - 1);
+    if (restModel->isAdd()) lock(true);
+
+    if (!defaultFocus) {
+        for (int i = 0; i < mapper->model()->columnCount(); ++i) {
+            if (mapper->mappedWidgetAt(i)) {
+                mapper->mappedWidgetAt(i)->setFocus();
+                break;
+            }
+        }
+    } else {
+        if (mapper->mappedWidgetAt(defaultFocus)){
+            mapper->mappedWidgetAt(defaultFocus)->setFocus();
+        }
+    }
+}
+
 void RestMapper::refresh()
 {
     mapper->setCurrentIndex(mapper->currentIndex());
@@ -181,25 +206,47 @@ void RestMapper::setCurrentViewRow(int row)
     viewer->scrollTo(viewer->currentIndex());
 }
 
-void RestMapper::slotNew()
+void RestMapper::reqSelect()
 {
     RestTableModel *restModel = qobject_cast<RestTableModel *>(mapper->model());
     if (restModel) {
-        restModel->selectSync();
-        restModel->insertRow(restModel->rowCount());
-        setCurrentViewRow(restModel->rowCount()-1);
-        if (restModel->isAdd()) lock(true);
-        if (!defaultFocus){
-            for (int i=0; i<mapper->model()->columnCount(); i++){
-                if (mapper->mappedWidgetAt(i)) {
-                    mapper->mappedWidgetAt(i)->setFocus();
-                    break;
-                }
-            }
-        } else {
-            if (mapper->mappedWidgetAt(defaultFocus)) mapper->mappedWidgetAt(defaultFocus)->setFocus();
-        }
+        savedPk=restModel->getPrimaryKeys(mapper->currentIndex());
     }
+}
+
+void RestMapper::restorePos()
+{
+    RestTableModel *restModel = qobject_cast<RestTableModel *>(mapper->model());
+    if (!restModel) return;
+
+    if (m_addPending) {
+        m_addPending = false;
+        insertNewRow();
+        return;
+    }
+
+    int row = mapper->model()->rowCount() - 1;
+    if (savedPk.size()) {
+        int found = restModel->findRowByPrimaryKeys(savedPk);
+        if (found >= 0) row = found;
+    }
+    if (row >= 0) {
+        setCurrentViewRow(row);
+    }
+}
+
+void RestMapper::slotNew()
+{
+    RestTableModel *restModel = qobject_cast<RestTableModel *>(mapper->model());
+    if (!restModel) return;
+
+    // Защита от двойного клика, пока идёт загрузка
+    if (m_addPending) return;
+
+    m_addPending = true;
+    savedPk.clear(); // сбрасываем старую позицию
+    restModel->select();          // асинхронно
+    // Дальше — по сигналу sigRefresh, в restorePos()
 }
 
 void RestMapper::slotEdt()
@@ -225,7 +272,7 @@ void RestMapper::slotWrite()
 {
     RestTableModel *restModel = qobject_cast<RestTableModel *>(mapper->model());
     if (restModel) {
-        mapper->submit();
+        if (!mapper->submit()) return;
         if (restModel->submitRow()) {
             this->refresh();
             lock(false);

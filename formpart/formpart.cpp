@@ -397,7 +397,7 @@ void FormPart::updStat()
         QByteArray data=reply->readAll();
         bool ok=(reply->error()==QNetworkReply::NoError);
         if (!ok){
-            QMessageBox::critical(nullptr,tr("Ошибка"),reply->errorString()+"\n"+data,QMessageBox::Cancel);
+            RestError::critical(tr("Ошибка"),reply->errorString()+"\n"+data);
         } else {
             const QJsonDocument doc = QJsonDocument::fromJson(data);
             for (const QJsonValue &val : doc.array()){

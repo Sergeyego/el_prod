@@ -15,11 +15,9 @@ TempFileManager::TempFileManager(QObject *parent)
     : QObject(parent)
     , m_sessionDir(QDir::tempPath() + "/" + QApplication::applicationName() + "_XXXXXX")
 {
-    /*if (m_sessionDir.isValid()) {
-        qDebug() << "Синглтон временных файлов запущен. Папка:" << m_sessionDir.path();
-    } else {
-        qCritical() << "Критическая ошибка: Не удалось создать временную папку сессии!";
-    }*/
+    if (!m_sessionDir.isValid()) {
+        RestError::instance()->push(tr("Ошибка"),tr("Не удалось создать временную папку сессии"));
+    }
 }
 
 QString TempFileManager::createFile(const QByteArray &data, const QString &extension, bool open_in_os) {
