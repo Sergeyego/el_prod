@@ -196,6 +196,11 @@ int RestRoTableModel::findRowByKey(QVariant key, QString col) const
     return -1;
 }
 
+int RestRoTableModel::columnIndex(QString nam) const
+{
+    return _columns.indexOf(nam);
+}
+
 void RestRoTableModel::select()
 {
     if (_path.isEmpty()){

@@ -811,24 +811,38 @@ QString RestTableModel::variantToDbString(const QVariant &val)
 
 QString RestTableModel::formatVal(const QVariant &val, int column) const
 {
-    QMetaType::Type type=columnType(column);
     if (val.isNull()){
         return QString("");
     }
+
     if (isColumnRel(column)){
+        const QString relnam = columnInfo(column).relnam;
+
+        // 1. Пытаемся найти значение в уже загруженной модели справочника
+        RestRelModel *relModel = RelModels::instance()->getModel(relnam);
+        if (relModel) {
+            int row = relModel->findRowByKey(val);
+            if (row >= 0) {
+                return relModel->getModelData(row).disp;
+            }
+        }
+
+        // 2. Если в кэше модели нет (или она ещё не догрузилась), делаем запрос к серверу
         QByteArray data;
         QUrlQuery query;
-        query.addQueryItem("key",val.toString());
-        bool ok = RestConnection::instance()->sendSyncGet("api/autorest/relations/"+columnInfo(column).relnam+"?"+query.toString(),data);
+        query.addQueryItem("key", val.toString());
+        bool ok = RestConnection::instance()->sendSyncGet("api/autorest/relations/" + relnam + "?" + query.toString(), data);
         if (ok){
             QJsonDocument doc = QJsonDocument::fromJson(data);
-            const QJsonArray arr=doc.array();
+            const QJsonArray arr = doc.array();
             if (arr.size()){
                 return arr.at(0).toObject().value("disp").toVariant().toString();
             }
-            return QString("");
         }
+        return QString("");
     }
+
+    QMetaType::Type type = columnType(column);
     switch (type) {
     case QMetaType::Bool: {
         return val.toBool()? tr("Да") : tr("Нет");

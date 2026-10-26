@@ -80,6 +80,7 @@ signals:
 
 private slots:
     void indexChanged(int n);
+    void textChanged(const QString &t);
     void edtRel();
     void updData();
     void mAboutReset();

@@ -96,10 +96,14 @@ void RestMapper::checkEmpty()
 {
     RestTableModel *restModel = qobject_cast<RestTableModel *>(mapper->model());
     if (restModel) {
-        bool val= restModel->rowCount()<=1 && restModel->isAdd();
-        for (int i=0; i<lockedEmptyWidgets.size(); i++) lockedEmptyWidgets[i]->setEnabled(!val);
-        cmdEdt->setEnabled(!val);
-        cmdDel->setEnabled(!val);
+        bool val = restModel->rowCount() <= 1 && restModel->isAdd();
+        if (!isEdt) {
+            for (int i=0; i<lockedEmptyWidgets.size(); i++) {
+                lockedEmptyWidgets[i]->setEnabled(!val);
+            }
+            cmdEdt->setEnabled(!val);
+            cmdDel->setEnabled(!val);
+        }
         emit lockChanged(val);
     }
 }
@@ -162,11 +166,20 @@ void RestMapper::insertNewRow()
     RestTableModel *restModel = qobject_cast<RestTableModel *>(mapper->model());
     if (!restModel) return;
 
-    if (!restModel->insertRow(restModel->rowCount())) return;
+    // Если модель уже пуста и сама добавила строку, insertRow вернет false.
+    // В этом случае нам не нужно добавлять еще одну, мы уже в режиме добавления.
+    if (!restModel->isAdd()) {
+        if (!restModel->insertRow(restModel->rowCount())) return;
+    }
 
     setCurrentViewRow(restModel->rowCount() - 1);
-    if (restModel->isAdd()) lock(true);
 
+    // Включаем режим редактирования (блокируем таблицу, разблокируем поля)
+    if (restModel->isAdd()) {
+        lock(true);
+    }
+
+    // Устанавливаем фокус
     if (!defaultFocus) {
         for (int i = 0; i < mapper->model()->columnCount(); ++i) {
             if (mapper->mappedWidgetAt(i)) {

@@ -28,6 +28,8 @@ public:
     bool isEditable() const;
     void setEditable(bool e);
     colVal getModelData(int index) const;
+    int findRowByKey(QVariant key) const;
+    void setMolelData(const QList<colVal> &data);
 
 public slots:
     void refresh();

@@ -15,7 +15,6 @@ bool CustomBaseCompleter::eventFilter(QObject *o, QEvent *e)
     if (e->type() == QEvent::KeyPress) {
         QKeyEvent *keyEvent = static_cast<QKeyEvent *>(e);
 
-        // Используем key() вместо text() — устойчиво к платформе и раскладке
         const bool isCommitKey =
             keyEvent->key() == Qt::Key_Return ||
             keyEvent->key() == Qt::Key_Enter  ||
@@ -26,7 +25,6 @@ bool CustomBaseCompleter::eventFilter(QObject *o, QEvent *e)
             if (m) {
                 QModelIndex current = popup()->currentIndex();
                 if (current.isValid()) {
-                    // Колонка 1 — disp; activated дальше маппится в setCurrentKey
                     emit activated(m->index(current.row(), 1));
                 } else if (m->rowCount() > 0) {
                     emit activated(m->index(0, 1));
@@ -92,7 +90,6 @@ void CustomOnlineCompleter::setCurrentKey(const QModelIndex &index)
     if (!m) m = this->model();
     if (!m) return;
 
-    // Читаем из модели как colVal, чтобы не терять тип ключа
     if (auto *rel = qobject_cast<RestRelModel *>(m)) {
         colVal d = rel->getModelData(index.row());
         if (!d.val.isNull() || !d.disp.isEmpty()) {
@@ -101,7 +98,6 @@ void CustomOnlineCompleter::setCurrentKey(const QModelIndex &index)
         return;
     }
 
-    // Fallback: работаем через QModelIndex-API
     colVal d;
     d.disp = m->data(m->index(index.row(), 1), Qt::EditRole).toString();
     d.val  = m->data(m->index(index.row(), 0), Qt::EditRole);
@@ -133,6 +129,8 @@ RestComboBox::RestComboBox(QWidget *parent) : QComboBox(parent)
     actionEdt = new QAction(QIcon(":images/key.png"), tr("Редактировать"), this);
     connect(this, QOverload<int>::of(&QComboBox::currentIndexChanged),
             this, &RestComboBox::indexChanged);
+    connect(this, &QComboBox::currentTextChanged,
+            this, &RestComboBox::textChanged);
 }
 
 RestComboBox::~RestComboBox()
@@ -147,7 +145,6 @@ colVal RestComboBox::getCurrentData() const
 
 void RestComboBox::cleanupCompleter()
 {
-    // Отвязываем и удаляем оба вида комплитеров и временную модель поиска
     if (isEditable()){
         setCompleter(nullptr);
     }
@@ -207,7 +204,6 @@ void RestComboBox::setModel(QAbstractItemModel *model)
         return QComboBox::setModel(model);
     }
 
-    // Удаляем предыдущие комплитеры и их вспомогательные модели
     cleanupCompleter();
 
     QComboBox::setModel(relModel);
@@ -225,7 +221,6 @@ void RestComboBox::setModel(QAbstractItemModel *model)
 
     if (isEditable()){
         if (relModel->isLimited()) {
-            // Онлайн-поиск: отдельная модель для like-запросов
             m_onlineCompleter = new CustomOnlineCompleter(this);
             m_onlineCompleter->setWidget(this);
 
@@ -237,10 +232,8 @@ void RestComboBox::setModel(QAbstractItemModel *model)
                     this, &RestComboBox::setCurrentData,
                     Qt::UniqueConnection);
 
-            // QComboBox::setCompleter(nullptr) — оставляем встроенный механизм отключённым
             QComboBox::setCompleter(nullptr);
         } else {
-            // Офлайн-поиск: работаем по уже загруженной модели справочника
             m_offlineCompleter = new CustomOfflineCompleter(this);
             m_offlineCompleter->setModel(relModel);
             m_offlineCompleter->setCompletionColumn(1);
@@ -263,6 +256,16 @@ void RestComboBox::indexChanged(int n)
     currentData = newVal;
 }
 
+void RestComboBox::textChanged(const QString &t)
+{
+    if (t.isEmpty()){
+        colVal newVal;
+        newVal.val = QVariant(); // Используем null, а не -1
+        currentData = newVal;
+        setCurrentIndex(-1);
+    }
+}
+
 void RestComboBox::edtRel()
 {
     emit sigActionEdtRel(dbModelIndex);
@@ -277,6 +280,7 @@ void RestComboBox::updData()
 
 void RestComboBox::mAboutReset()
 {
+    blockSignals(true);
     isReset = true;
     saveData = currentData;
 }
@@ -285,34 +289,30 @@ void RestComboBox::mReset()
 {
     isReset = false;
     setCurrentData(saveData);
+    blockSignals(false);
 }
 
 void RestComboBox::setCurrentData(colVal data)
 {
-    currentData = data;
-    int foundRow = -1;
+    // Блокируем сигналы, чтобы setText("") не вызвал textChanged
+    // и не затер только что установленный currentData
+    const QSignalBlocker blocker(this);
 
-    if (model() && data.val.isValid()) {
-        // Ищем строго по ключу (колонка 0, EditRole).
-        // Сравнение через toString() — чтобы int/double/QString с одним и тем же
-        // значением (1 / 1.0 / "1") считались равными, как и на сервере.
-        const QString target = data.val.toString();
-        const int rows = model()->rowCount();
-        for (int i = 0; i < rows; ++i) {
-            const QVariant key = model()->data(model()->index(i, 0), Qt::EditRole);
-            if (key.toString() == target) {
-                foundRow = i;
-                break;
+    currentData = data;
+
+    // Ищем в модели только если ключ валиден и не пуст
+    if (data.val.isValid() && !data.val.isNull()) {
+        if (auto *rel = qobject_cast<RestRelModel *>(model())) {
+            int row = rel->findRowByKey(data.val);
+            if (row >= 0) {
+                setCurrentIndex(row);
+                return;
             }
         }
     }
 
-    if (foundRow >= 0) {
-        setCurrentIndex(foundRow);
-    } else {
-        setCurrentIndex(-1);
-        if (isEditable() && lineEdit()) {
-            lineEdit()->setText(data.disp);
-        }
+    setCurrentIndex(-1);
+    if (isEditable() && lineEdit()) {
+        lineEdit()->setText(data.disp);
     }
 }

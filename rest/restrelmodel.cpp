@@ -176,17 +176,42 @@ void RestRelModel::onResult()
 
     // 5. Успешное выполнение
     const QJsonArray arr = doc.array();
-    beginResetModel();
-    _data.clear();
+    QList<colVal> tmp;
     for (const QJsonValue &value : arr) {
         colVal row;
         row.val=value.toObject().value("key").toVariant();
         row.disp=value.toObject().value("disp").toString();
-        _data.push_back(row);
+        tmp.push_back(row);
     }
-    endResetModel();
+    setMolelData(tmp);
 
     emit refreshFinished(pattern);
 
     processNextRequest();
+}
+
+int RestRelModel::findRowByKey(QVariant key) const
+{
+    if (key.isNull() || _data.isEmpty()) {
+        return -1;
+    }
+
+    // Сравниваем через toString(), чтобы int(1), double(1.0) и QString("1")
+    // считались одним и тем же ключом (как это делает сервер и RestComboBox)
+    const QString target = key.toString();
+
+    for (int row = 0; row < _data.size(); ++row) {
+        if (_data.at(row).val.toString() == target) {
+            return row;
+        }
+    }
+
+    return -1;
+}
+
+void RestRelModel::setMolelData(const QList<colVal> &data)
+{
+    beginResetModel();
+    _data=data;
+    endResetModel();
 }
