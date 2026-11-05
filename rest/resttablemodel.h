@@ -18,7 +18,7 @@ class DataEditor : public QObject
 {
     Q_OBJECT
 public:
-    DataEditor(QVector<QVector<cellData>> *data, QObject *parent=nullptr);
+    DataEditor(QVector<QVector<cellData>> *data, QObject *parent = nullptr);
     bool add(int p, const QVector<cellData> &row);
     bool edt(int row, int col, cellData val);
     void submit();
@@ -40,7 +40,7 @@ class RestTableModel : public QAbstractTableModel
 {
     Q_OBJECT
 public:
-    RestTableModel(QString name, QObject *parent);
+    RestTableModel(QString name, QObject *parent = nullptr);
     ~RestTableModel();
     Qt::ItemFlags flags(const QModelIndex &index) const;
     QVariant data(const QModelIndex &index, int role=Qt::DisplayRole) const;

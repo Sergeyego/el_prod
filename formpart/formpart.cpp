@@ -455,6 +455,7 @@ void FormPart::insertMark()
                 colVal id_el;
                 id_el.val=id;
                 ui->comboBoxMark->setCurrentData(id_el);
+                insertProvol();
             }
         }
     }

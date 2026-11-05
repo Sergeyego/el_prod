@@ -312,17 +312,20 @@ void RestItemDelegate::edtRels(QModelIndex index)
 
     const colInfo ci = restTableModel->columnInfo(index.column());
 
+    RestRelModel *rel = RelModels::instance()->getModel(ci.relnam);
+    if (!rel){
+        return;
+    }
+
     // Открываем диалог редактирования справочника
-    RestTableDialog d(ci.relnam);
+    RestTableDialog d(rel->editor());
     d.setWindowTitle(tr("Редактирование таблицы ") + ci.snam);
     d.model->select();
 
     const auto dialogResult = d.exec();
 
     // Обновляем справочник независимо от результата — данные могли измениться
-    if (auto *rel = RelModels::instance()->getModel(ci.relnam)) {
-        rel->refresh();
-    }
+    rel->refresh();
 
     if (dialogResult != QDialog::Accepted) {
         return;
